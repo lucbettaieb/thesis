@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package>
+  <name>map_segmentation</name>
+  <version>0.0.0</version>
+  <description>Tests in map segmentation stuff</description>
+
+  <maintainer email="bettaieb@case.edu">Luc Bettaieb</maintainer>
+  <author email="luc.bettaieb@gmail.com">Luc Bettaieb</author>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+
+  <run_depend>roscpp</run_depend>
+
+</package>
