@@ -1,0 +1,4 @@
+# Settings for img_downsize
+
+image_topic: /camera/rgb/image_raw
+scale: 4
