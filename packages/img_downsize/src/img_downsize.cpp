@@ -19,6 +19,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/imgproc/imgproc.hpp>
 
+// Globals
 ros::Publisher g_img_pub_;
 ros::Subscriber g_img_sub_;
 
