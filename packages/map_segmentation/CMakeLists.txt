@@ -6,15 +6,17 @@ project(map_segmentation)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  nav_msgs
+  pluginlib
 )
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
-  INCLUDE_DIRS include
+  INCLUDE_DIRS include 
 #  LIBRARIES lab_map_segmentation
-#  CATKIN_DEPENDS other_catkin_pkg
+  CATKIN_DEPENDS nav_msgs pluginlib
   DEPENDS system_lib
 )
 
@@ -36,16 +38,18 @@ include_directories(
 # add_dependencies(lab_map_segmentation ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-# add_executable(lab_map_segmentation_node src/lab_map_segmentation_node.cpp)
+add_executable(map_segmenter src/map_segmenter.cpp
+                             src/segmenter.cpp
+                             src/simple_segmenter.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(lab_map_segmentation_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(map_segmenter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(lab_map_segmentation_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(map_segmenter
+  ${catkin_LIBRARIES}
+)
 
 
 #############

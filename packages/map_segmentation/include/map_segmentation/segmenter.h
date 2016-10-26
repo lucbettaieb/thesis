@@ -14,6 +14,8 @@
 // ROS Messages
 #include <nav_msgs/OccupancyGrid.h>
 
+#include <map_segmentation/region.h>
+
 class Segmenter
 {
 public:
@@ -29,6 +31,7 @@ public:
    */
   ~Segmenter();
 
+  void initialize(ros::NodeHandle nh);
 
   void segment();
 
@@ -39,6 +42,7 @@ private:
   ros::Publisher segmented_map_pub_;
 
   nav_msgs::OccupancyGrid map_;
+
   nav_msgs::OccupancyGrid segmented_map_;
 
   // Specify the map topic on the parameter server

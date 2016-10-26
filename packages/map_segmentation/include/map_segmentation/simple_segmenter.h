@@ -17,12 +17,11 @@ class SimpleSegmenter : public Segmenter
 {
 public:
   SimpleSegmenter();
-
   ~SimpleSegmenter();
 
-private:
+  void initialize(ros::NodeHandle nh);
   void segment();
-}
+};
 
 }  // namespace segmenter_plugins
 

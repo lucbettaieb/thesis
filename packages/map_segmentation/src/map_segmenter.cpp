@@ -8,12 +8,12 @@
 #include <ros/ros.h>
 #include <string>
 #include <pluginlib/class_loader.h>
-
+#include <boost/shared_ptr.hpp>
 #include <map_segmentation/segmenter.h>
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "map_segmenter");
+  ros::init(argc, argv, "segmenter_plugins::SimpleSegmenter");
   ros::NodeHandle nh;
 
   // Make this a parameter
@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 
   pluginlib::ClassLoader<Segmenter> segmenter_loader("map_segmenter", "Segmenter");
 
-  std::shared_ptr<Segmenter> segmenter;
+  boost::shared_ptr<Segmenter> segmenter;
   try
   {
     segmenter = segmenter_loader.createInstance(plugin_type);
