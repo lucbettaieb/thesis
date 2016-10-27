@@ -29,21 +29,25 @@ void SimpleSegmenter::initialize(ros::NodeHandle nh)
 void SimpleSegmenter::segment()
 {
   ROS_INFO("SIMPLE SEGMENT");
-  // Make sure there is a map...
 
+  // Make sure there is a map...
+  if (Segmenter::map_.data.size() == 0)
+  {
+    ROS_ERROR("Map not yet populated");
+    return;
+  }
   // First copy over the segmented map...
+
   nav_msgs::OccupancyGrid segmented_map = Segmenter::map_;
+  // segmented_map.data.resize(Segmenter::map_.info.height*Segmenter::map_.info.width);
 
   // Now, let's try to alter the segmented map's state
-  size_t iter = 0;
-  for (size_t i = 0; i < segmented_map.info.height; i++)
+
+  for (uint i = 0; i < segmented_map.data.size(); i++)
   {
-    for (size_t j = 0; i < segmented_map.info.width; j++)
-    {
-      segmented_map.data[iter] = 100;
-      iter++;
-    }
+    segmented_map.data[i] = 100;
   }
+
   segmented_map_pub_.publish(segmented_map);
 
   // Publish the segmented map

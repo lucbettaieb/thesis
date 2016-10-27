@@ -23,7 +23,7 @@ void Segmenter::initialize(ros::NodeHandle nh)
 {
   nh_ = nh;
 
-  map_sub_ = nh_.subscribe("map", 1, &Segmenter::mapCB, this);
+  map_sub_ = nh_.subscribe("/map", 1, &Segmenter::mapCB, this);
   segmented_map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/segmented_map", 1);
 }
 
@@ -35,5 +35,7 @@ void Segmenter::segment()
 // Consider changing this to a ConstPtr
 void Segmenter::mapCB(const nav_msgs::OccupancyGrid &msg)
 {
+  ROS_INFO("MAP_CB");
   map_ = msg;
+  std::cout << map_.info.width << ", width!" << std::endl;
 }
