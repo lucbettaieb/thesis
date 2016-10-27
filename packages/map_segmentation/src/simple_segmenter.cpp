@@ -32,11 +32,19 @@ void SimpleSegmenter::segment()
   // Make sure there is a map...
 
   // First copy over the segmented map...
-  nav_msgs::OccupancyGrid segmented_map_ = Segmenter::map_;
+  nav_msgs::OccupancyGrid segmented_map = Segmenter::map_;
 
   // Now, let's try to alter the segmented map's state
-  for (size_t i = 0; i < segmented_map_.info.width; i++)
-  {}
+  size_t iter = 0;
+  for (size_t i = 0; i < segmented_map.info.height; i++)
+  {
+    for (size_t j = 0; i < segmented_map.info.width; j++)
+    {
+      segmented_map.data[iter] = 100;
+      iter++;
+    }
+  }
+  segmented_map_pub_.publish(segmented_map);
 
   // Publish the segmented map
 }
