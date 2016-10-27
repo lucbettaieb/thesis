@@ -1,2 +1,2 @@
 ## Luc Bettaieb's Master's Thesis
-_"Probably some kind of CNN localization crap"_
+_"Some kind of CNN localization mess."_
