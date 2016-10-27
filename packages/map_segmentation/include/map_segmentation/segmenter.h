@@ -29,11 +29,13 @@ public:
   /*
    * @brief Destructor for the Segmenter base class
    */
-  ~Segmenter();
+  virtual ~Segmenter();
 
-  void initialize(ros::NodeHandle nh);
+  virtual void initialize(ros::NodeHandle nh);
 
-  void segment();
+  virtual void segment();
+protected:
+  nav_msgs::OccupancyGrid map_;
 
 private:
   ros::NodeHandle nh_;
@@ -41,9 +43,6 @@ private:
   ros::Subscriber map_sub_;
   ros::Publisher segmented_map_pub_;
 
-  nav_msgs::OccupancyGrid map_;
-
-  nav_msgs::OccupancyGrid segmented_map_;
 
   // Specify the map topic on the parameter server
   void mapCB(const nav_msgs::OccupancyGrid &msg);

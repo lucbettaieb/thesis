@@ -28,26 +28,15 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(lab_map_segmentation
-#   src/${PROJECT_NAME}/lab_map_segmentation.cpp
-# )
-
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
-# add_dependencies(lab_map_segmentation ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_library(map_segmentation src/segmenter.cpp
+               src/simple_segmenter.cpp)
+add_dependencies(map_segmentation ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(map_segmenter src/map_segmenter.cpp
-                             src/segmenter.cpp
-                             src/simple_segmenter.cpp)
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-add_dependencies(map_segmenter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
+add_executable(map_segmenter src/map_segmenter.cpp)
+add_dependencies(map_segmenter map_segmentation ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(map_segmenter
+  map_segmentation
   ${catkin_LIBRARIES}
 )
 

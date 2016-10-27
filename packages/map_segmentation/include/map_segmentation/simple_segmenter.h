@@ -17,7 +17,7 @@ class SimpleSegmenter : public Segmenter
 {
 public:
   SimpleSegmenter();
-  ~SimpleSegmenter();
+  virtual ~SimpleSegmenter();
 
   void initialize(ros::NodeHandle nh);
   void segment();

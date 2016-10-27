@@ -28,19 +28,17 @@ void SimpleSegmenter::initialize(ros::NodeHandle nh)
 
 void SimpleSegmenter::segment()
 {
-  // Make sure there is a map
-  // if (Segmenter.map_ == NULL)
-  // {
-  //   ROS_ERROR("Map was not populated for some reason");
-  //   return;
-  // }
+  ROS_INFO("SIMPLE SEGMENT");
+  // Make sure there is a map...
 
-  // if (Segmenter.segmented_map_ != NULL)
-  // {
-  //   ROS_ERROR("Segmented map already populated.");
-  //   return;
-  // }
-  // Here, populated the segmented map in a handy dandy way.
+  // First copy over the segmented map...
+  nav_msgs::OccupancyGrid segmented_map_ = Segmenter::map_;
+
+  // Now, let's try to alter the segmented map's state
+  for (size_t i = 0; i < segmented_map_.info.width; i++)
+  {}
+
+  // Publish the segmented map
 }
 
 }  // namespace segmenter_plugins
