@@ -37,5 +37,5 @@ void Segmenter::mapCB(const nav_msgs::OccupancyGrid &msg)
 {
   ROS_INFO("MAP_CB");
   map_ = msg;
-  std::cout << map_.info.width << ", width!" << std::endl;
+
 }
