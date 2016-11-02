@@ -29,7 +29,8 @@ include_directories(
 
 ## Declare a C++ library
 add_library(map_segmentation src/segmenter.cpp
-               src/simple_segmenter.cpp)
+                             src/naive_segmenter.cpp
+                             src/region.cpp)
 add_dependencies(map_segmentation ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable

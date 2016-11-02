@@ -16,27 +16,35 @@
 
 struct Point2d
 {
-  double x;
-  double y;
+  int x;
+  int y;
 };
 
 class Region
 {
 public:
+  Region(int tl_x, int tl_y,
+         int tr_x, int tr_y,
+         int bl_x, int bl_y,
+         int br_x, int br_y);
   Region();
 
   ~Region();
-
-private:
-  Point2d top_left;
-  Point2d top_right;
-  Point2d bottom_left;
-  Point2d bottom_right;
 
   bool inRegion(geometry_msgs::PoseWithCovarianceStamped pose);
   bool inRegion(geometry_msgs::PoseWithCovariance pose);
   bool inRegion(geometry_msgs::PoseStamped pose);
   bool inRegion(geometry_msgs::Pose pose);
+
+  Point2d top_left;
+  Point2d top_right;
+  Point2d bottom_left;
+  Point2d bottom_right;
+
+private:
+  
+
+
 };
 
 #endif  // MAP_SEGMENTATION_REGION_H

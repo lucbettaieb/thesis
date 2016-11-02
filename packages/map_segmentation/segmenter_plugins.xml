@@ -1,7 +1,7 @@
 <library path="lib/libmap_segmentation">
-	<class type="segmenter_plugins::SimpleSegmenter" base_class_type="Segmenter">
+	<class type="segmenter_plugins::NaiveSegmenter" base_class_type="Segmenter">
 		<description>
-			A simple segmenter
+			A naive segmenter
 		</description>
 	</class>
 </library>
