@@ -1,0 +1,5 @@
+# GetRegion
+# Returns an appropriate region (string) for a pose
+geometry_msgs/Pose pose
+---
+string region

@@ -14,6 +14,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Pose.h>
 
+#include <string>
+
 struct Point2d
 {
   int x;
@@ -40,6 +42,8 @@ public:
   Point2d top_right;
   Point2d bottom_left;
   Point2d bottom_right;
+
+  std::string id;
 
 private:
   

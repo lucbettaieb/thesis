@@ -11,6 +11,14 @@
 #include <boost/shared_ptr.hpp>
 #include <map_segmentation/segmenter.h>
 
+/*
+ * Service callback to give the appropriate region (string) based on a pose
+ */
+// bool getRegion(map_segmentation::GetRegion::Request &req,
+//                map_segmentation::GetRegion::Response &res)
+// {
+  
+// }
 
 // This should advertise a ROS service that, given a position, returns a region for a label
 int main(int argc, char** argv)
@@ -19,7 +27,7 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
 
   // Make this a parameter
-  std::string plugin_type = "NaiveSegmenter";
+  std::string plugin_type = "segmenter_plugins::NaiveSegmenter";
 
   pluginlib::ClassLoader<Segmenter> segmenter_loader("map_segmentation", "Segmenter");
 
@@ -27,9 +35,8 @@ int main(int argc, char** argv)
   {
     boost::shared_ptr<Segmenter> segmenter;
 
-    segmenter = segmenter_loader.createInstance("segmenter_plugins::NaiveSegmenter");
+    segmenter = segmenter_loader.createInstance(plugin_type);
     segmenter->initialize(nh);
-
 
     ROS_INFO("Loaded segmenter, going into spin.");
 

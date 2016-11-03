@@ -7,16 +7,27 @@ project(map_segmentation)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   nav_msgs
+  geometry_msgs
   pluginlib
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
 
+add_service_files(
+  FILES
+  GetRegion.srv
+)
+generate_messages(
+  DEPENDENCIES
+  geometry_msgs
+)
+
 catkin_package(
-  INCLUDE_DIRS include 
+  INCLUDE_DIRS include
 #  LIBRARIES lab_map_segmentation
-  CATKIN_DEPENDS nav_msgs pluginlib
+  CATKIN_DEPENDS nav_msgs pluginlib message_runtime
   DEPENDS system_lib
 )
 

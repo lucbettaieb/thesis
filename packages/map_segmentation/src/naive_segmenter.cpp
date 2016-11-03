@@ -8,27 +8,27 @@
 #include <boost/bind.hpp>
 #include <pluginlib/class_list_macros.h>
 
-PLUGINLIB_EXPORT_CLASS(segmenter_plugins::SimpleSegmenter, Segmenter)
+PLUGINLIB_EXPORT_CLASS(segmenter_plugins::NaiveSegmenter, Segmenter)
 
 namespace segmenter_plugins
 {
 
-SimpleSegmenter::SimpleSegmenter()
+NaiveSegmenter::NaiveSegmenter()
 {
 }
 
-SimpleSegmenter::~SimpleSegmenter()
+NaiveSegmenter::~NaiveSegmenter()
 {
 }
 
-void SimpleSegmenter::initialize(ros::NodeHandle nh)
+void NaiveSegmenter::initialize(ros::NodeHandle nh)
 {
-  ROS_INFO("SimpleSegmenter initialized.");
+  ROS_INFO("NaiveSegmenter initialized.");
 
   Segmenter::initialize(nh);
 }
 
-void SimpleSegmenter::segment()
+void NaiveSegmenter::segment()
 {
   // Make sure there is a map...
   if (Segmenter::map_.data.size() == 0)
