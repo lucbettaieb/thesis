@@ -9,6 +9,7 @@
 
 #include <map_segmentation/segmenter.h>
 #include <boost/bind.hpp>
+#include <vector>
 
 Segmenter::Segmenter()
 {
@@ -32,10 +33,16 @@ void Segmenter::segment()
   ROS_WARN("This is the base class, no real functionality exists.");
 }
 
+void Segmenter::getRegions(std::vector<Region> &vec)
+{
+  ROS_WARN("You should not be calling this!  Returning an empty vector.");
+  std::vector<Region> empty_vec;
+
+  vec = empty_vec;
+}
+
 // Consider changing this to a ConstPtr
 void Segmenter::mapCB(const nav_msgs::OccupancyGrid &msg)
 {
-  ROS_INFO("MAP_CB");
   map_ = msg;
-
 }

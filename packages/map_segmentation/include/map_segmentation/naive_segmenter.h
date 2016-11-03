@@ -9,6 +9,7 @@
 #define MAP_SEGMENTATION_NAIVE_SEGMENTER_H
 
 #include <map_segmentation/segmenter.h>
+#include <vector>
 
 namespace segmenter_plugins
 {
@@ -21,6 +22,11 @@ public:
 
   void initialize(ros::NodeHandle nh);
   void segment();
+
+  void getRegions(std::vector<Region> &vec);
+
+private:
+  std::vector<Region> region_vector_;
 };
 
 }  // namespace segmenter_plugins

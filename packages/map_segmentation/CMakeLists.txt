@@ -38,6 +38,8 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+
 ## Declare a C++ library
 add_library(map_segmentation src/segmenter.cpp
                              src/naive_segmenter.cpp

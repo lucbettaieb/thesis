@@ -44,3 +44,15 @@ Region::~Region()
 {
 }
 
+Point2d Region::getCenter()
+{
+  Point2d center;
+
+  center.x = top_left.x + (static_cast<int>(top_right.x - top_left.x) / 2);
+  center.y = bottom_left.y + (static_cast<int>(top_left.y - bottom_left.y) / 2);
+
+  center.x /=
+  center.y /=
+
+  return center;
+}

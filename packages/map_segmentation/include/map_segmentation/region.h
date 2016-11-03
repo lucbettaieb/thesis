@@ -45,10 +45,7 @@ public:
 
   std::string id;
 
-private:
-  
-
-
+  Point2d getCenter();
 };
 
 #endif  // MAP_SEGMENTATION_REGION_H

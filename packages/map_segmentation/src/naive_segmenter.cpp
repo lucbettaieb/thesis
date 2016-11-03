@@ -7,6 +7,7 @@
 #include <map_segmentation/naive_segmenter.h>
 #include <boost/bind.hpp>
 #include <pluginlib/class_list_macros.h>
+#include <vector>
 
 PLUGINLIB_EXPORT_CLASS(segmenter_plugins::NaiveSegmenter, Segmenter)
 
@@ -47,11 +48,6 @@ void NaiveSegmenter::segment()
   // Create region vector
   std::vector<Region> region_vec;
 
-  // int res_y = Segmenter::map_.info.height / region_resolution;
-  // int res_x = Segmenter::map_.info.width / region_resolution;
-
-  // region_vec.resize(res_y * res_x);
-
   // Resize map tuple vector
   map_vec.resize(Segmenter::map_.info.height);
   for (uint i = 0; i < Segmenter::map_.info.height; i++)
@@ -75,14 +71,12 @@ void NaiveSegmenter::segment()
   {
     for (uint j = 0; j < segmented_map.info.width; j++)
     {
-
       //  Every 20 pixels...
       if (j % region_resolution == 0 || i % region_resolution == 0)
       {
         // Get corner points of regions
         if (j % region_resolution == 0 && i % region_resolution == 0)
         {
-
           if (j + region_resolution <= segmented_map.info.width &&
               i + region_resolution <= segmented_map.info.height)
           {
@@ -91,12 +85,12 @@ void NaiveSegmenter::segment()
                 (map_vec.at(i).at(j + region_resolution) != -1 && map_vec.at(i).at(j + region_resolution) != 99) ||
                 (map_vec.at(i + region_resolution).at(j + region_resolution) != -1 && map_vec.at(i + region_resolution).at(j + region_resolution) != 99))
             {
-
               Region r;
+              r.id = "i" + std::to_string(i) + "j" + std::to_string(j);
 
               r.top_left.x = j;
               r.top_left.y = i;
-              
+
               r.top_right.x = j + region_resolution;
               r.top_right.y = i;
 
@@ -114,7 +108,6 @@ void NaiveSegmenter::segment()
               map_vec.at(i + region_resolution).at(j + region_resolution) = 99;
             }
           }
-
         }
         // Region border points
         else
@@ -123,13 +116,18 @@ void NaiveSegmenter::segment()
         }
       }
       // Copy the map_vec over
-      segmented_map.data[iter] = map_vec.at(i).at(j);   
+      segmented_map.data[iter] = map_vec.at(i).at(j);
       iter++;
     }
   }
 
-
+  region_vector_ = region_vec;
   segmented_map_pub_.publish(segmented_map);
+}
+
+void NaiveSegmenter::getRegions(std::vector<Region> &vec)
+{
+  vec = region_vector_;
 }
 
 }  // namespace segmenter_plugins

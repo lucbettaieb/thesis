@@ -16,6 +16,8 @@
 
 #include <map_segmentation/region.h>
 
+#include <vector>
+
 class Segmenter
 {
 public:
@@ -34,6 +36,8 @@ public:
   virtual void initialize(ros::NodeHandle nh);
 
   virtual void segment();
+
+  virtual void getRegions(std::vector<Region> &vec);
 
 protected:
   nav_msgs::OccupancyGrid map_;
