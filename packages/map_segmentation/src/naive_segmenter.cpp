@@ -29,13 +29,13 @@ void NaiveSegmenter::initialize(ros::NodeHandle nh)
   Segmenter::initialize(nh);
 }
 
-void NaiveSegmenter::segment()
+bool NaiveSegmenter::segment()
 {
   // Make sure there is a map...
   if (Segmenter::map_.data.size() == 0)
   {
     ROS_ERROR("Map not yet populated");
-    return;
+    return false;
   }
 
   uint region_resolution = 30;  // TODO(lucbettaieb): parameterize this constant
@@ -86,7 +86,7 @@ void NaiveSegmenter::segment()
                 (map_vec.at(i + region_resolution).at(j + region_resolution) != -1 && map_vec.at(i + region_resolution).at(j + region_resolution) != 99))
             {
               Region r;
-              r.id = "i" + std::to_string(i) + "j" + std::to_string(j);
+              r.id = std::to_string(i) + std::to_string(j);
 
               r.top_left.x = j;
               r.top_left.y = i;
@@ -123,6 +123,7 @@ void NaiveSegmenter::segment()
 
   region_vector_ = region_vec;
   segmented_map_pub_.publish(segmented_map);
+  return true;
 }
 
 void NaiveSegmenter::getRegions(std::vector<Region> &vec)

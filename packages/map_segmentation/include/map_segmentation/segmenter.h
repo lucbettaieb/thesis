@@ -35,7 +35,7 @@ public:
 
   virtual void initialize(ros::NodeHandle nh);
 
-  virtual void segment();
+  virtual bool segment();
 
   virtual void getRegions(std::vector<Region> &vec);
 

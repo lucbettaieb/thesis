@@ -28,9 +28,10 @@ void Segmenter::initialize(ros::NodeHandle nh)
   segmented_map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("/segmented_map", 1);
 }
 
-void Segmenter::segment()
+bool Segmenter::segment()
 {
   ROS_WARN("This is the base class, no real functionality exists.");
+  return false;
 }
 
 void Segmenter::getRegions(std::vector<Region> &vec)

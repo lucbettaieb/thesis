@@ -49,7 +49,7 @@ Point2d Region::getCenter()
   Point2d center;
 
   center.x = (top_left.x + top_right.x) / 2;
-  center.y = (top_left.y + top_left.y) / 2;
+  center.y = (top_left.y + bottom_left.y) / 2;
 
   center.x *= 0.05;
   center.y *= 0.05;

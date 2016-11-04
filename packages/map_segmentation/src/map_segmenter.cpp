@@ -6,6 +6,10 @@
  */
 
 #include <ros/ros.h>
+
+#include <visualization_msgs/MarkerArray.h>
+#include <visualization_msgs/Marker.h>
+
 #include <string>
 #include <pluginlib/class_loader.h>
 #include <boost/shared_ptr.hpp>
@@ -20,7 +24,7 @@ std::vector<Region> region_vector;
 double euclidian_distance(geometry_msgs::Pose pose, Point2d center)
 {
   return std::sqrt(((pose.position.x * pose.position.x) - (center.x * center.x)) +
-                    ((pose.position.y * pose.position.y) - (center.y * center.y)));
+                   ((pose.position.y * pose.position.y) - (center.y * center.y)));
 }
 
 /*
@@ -44,7 +48,7 @@ bool getRegion(map_segmentation::GetRegion::Request &req,
       min_center = region_vector.at(i).getCenter();
     }
   }
-  std::cout << "center of region: " << min_center.x << ", " << min_center.y << std::endl;
+  std::cout << "Center of region: " << min_center.x << ", " << min_center.y << std::endl;
   res.region = min_id;
   return true;
 }
@@ -58,6 +62,10 @@ int main(int argc, char** argv)
   // Advertise service!
   // Consider doing this after whatever lookup table is published...
   ros::ServiceServer service = nh.advertiseService("get_region", getRegion);
+
+  ros::Publisher region_center_pub = nh.advertise<visualization_msgs::MarkerArray>("/region_centers", 0);
+
+  visualization_msgs::MarkerArray region_centers;
 
   // Make this a parameter
   std::string plugin_type = "segmenter_plugins::NaiveSegmenter";
@@ -74,16 +82,57 @@ int main(int argc, char** argv)
     ROS_INFO("Loaded segmenter, going into spin.");
 
     // Make this a parameter
-    ros::Rate naptime(0.1);
+    ros::Rate naptime(0.5);
 
-    while (ros::ok())
+    while (ros::ok() && !segmenter->segment())
     {
-      segmenter->segment();
-      segmenter->getRegions(region_vector);
       naptime.sleep();
       ros::spinOnce();
     }
 
+    while (region_vector.size() == 0)
+    {
+      segmenter->getRegions(region_vector);
+    }
+
+    // Publish all region centers for visualization
+
+    for (uint i = 0; i < region_vector.size(); i++)
+    {
+      visualization_msgs::Marker marker;
+
+      marker.header.frame_id = "map";
+      marker.header.stamp = ros::Time::now();
+      marker.ns = "region_centers";
+
+      marker.id = std::stoi(region_vector.at(i).id);
+      marker.type = visualization_msgs::Marker::SPHERE;
+      marker.action = visualization_msgs::Marker::ADD;
+
+      marker.pose.position.x = region_vector.at(i).getCenter().x;
+      marker.pose.position.y = region_vector.at(i).getCenter().y;
+      marker.pose.position.z = 0.01;
+
+      marker.pose.orientation.x = 0.0;
+      marker.pose.orientation.y = 0.0;
+      marker.pose.orientation.z = 0.0;
+      marker.pose.orientation.w = 1.0;
+
+      marker.scale.x = 0.5;
+      marker.scale.y = 0.5;
+      marker.scale.z = 0.5;
+      marker.color.a = 1.0; // Don't forget to set the alpha!
+      marker.color.r = 0.0;
+      marker.color.g = 1.0;
+      marker.color.b = 0.0;
+
+      region_centers.markers.push_back(marker);
+    }
+
+    region_center_pub.publish(region_centers);
+
+    ROS_INFO("Standing by.");
+    ros::spin();
   }
   catch(pluginlib::PluginlibException &ex)
   {

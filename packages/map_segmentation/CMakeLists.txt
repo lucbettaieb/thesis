@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   nav_msgs
   geometry_msgs
+  visualization_msgs
   pluginlib
   message_generation
 )

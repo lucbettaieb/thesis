@@ -21,7 +21,7 @@ public:
   virtual ~NaiveSegmenter();
 
   void initialize(ros::NodeHandle nh);
-  void segment();
+  bool segment();
 
   void getRegions(std::vector<Region> &vec);
 
