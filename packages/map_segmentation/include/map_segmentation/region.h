@@ -18,17 +18,17 @@
 
 struct Point2d
 {
-  int x;
-  int y;
+  double x;
+  double y;
 };
 
 class Region
 {
 public:
-  Region(int tl_x, int tl_y,
-         int tr_x, int tr_y,
-         int bl_x, int bl_y,
-         int br_x, int br_y);
+  Region(double tl_x, double tl_y,
+         double tr_x, double tr_y,
+         double bl_x, double bl_y,
+         double br_x, double br_y);
   Region();
 
   ~Region();

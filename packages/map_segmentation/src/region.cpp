@@ -7,10 +7,10 @@
 
 #include <map_segmentation/region.h>
 
-Region::Region(int tl_x, int tl_y,
-               int tr_x, int tr_y,
-               int bl_x, int bl_y,
-               int br_x, int br_y)
+Region::Region(double tl_x, double tl_y,
+               double tr_x, double tr_y,
+               double bl_x, double bl_y,
+               double br_x, double br_y)
 {
   top_left.x = tl_x;
   top_left.y = tl_y;
@@ -27,17 +27,17 @@ Region::Region(int tl_x, int tl_y,
 
 Region::Region()
 {
-  top_left.x = 0;
-  top_left.y = 0;
+  top_left.x = 0.0;
+  top_left.y = 0.0;
 
-  top_right.x = 0;
-  top_right.y = 0;
+  top_right.x = 0.0;
+  top_right.y = 0.0;
 
-  bottom_left.x = 0;
-  bottom_left.y = 0;
+  bottom_left.x = 0.0;
+  bottom_left.y = 0.0;
 
-  bottom_right.x = 0;
-  bottom_right.y = 0;
+  bottom_right.x = 0.0;
+  bottom_right.y = 0.0;
 }
 
 Region::~Region()
@@ -48,11 +48,11 @@ Point2d Region::getCenter()
 {
   Point2d center;
 
-  center.x = top_left.x + (static_cast<int>(top_right.x - top_left.x) / 2);
-  center.y = bottom_left.y + (static_cast<int>(top_left.y - bottom_left.y) / 2);
+  center.x = (top_left.x + top_right.x) / 2;
+  center.y = (top_left.y + top_left.y) / 2;
 
-  center.x /=
-  center.y /=
+  center.x *= 0.05;
+  center.y *= 0.05;
 
   return center;
 }

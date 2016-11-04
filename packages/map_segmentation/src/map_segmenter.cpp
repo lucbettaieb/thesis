@@ -19,7 +19,6 @@ std::vector<Region> region_vector;
 
 double euclidian_distance(geometry_msgs::Pose pose, Point2d center)
 {
-  std::cout << "PS" << pose.position.x << " " << center.x << std::endl;
   return std::sqrt(((pose.position.x * pose.position.x) - (center.x * center.x)) +
                     ((pose.position.y * pose.position.y) - (center.y * center.y)));
 }
@@ -33,17 +32,19 @@ bool getRegion(map_segmentation::GetRegion::Request &req,
   std::cout << "Got pose: " << req.pose.position.x << ", " << req.pose.position.y << std::endl;
   std::string min_id;
   double min_dist = std::numeric_limits<double>::max();
-
+  Point2d min_center;
   for (uint i = 0; i < region_vector.size(); i++)
   {
     double euc_dist = euclidian_distance(req.pose, region_vector.at(i).getCenter());
-    std::cout << "ed: " << euc_dist << std::endl;
+
     if (euc_dist < min_dist)
     {
       min_dist = euc_dist;
       min_id = region_vector.at(i).id;
+      min_center = region_vector.at(i).getCenter();
     }
   }
+  std::cout << "center of region: " << min_center.x << ", " << min_center.y << std::endl;
   res.region = min_id;
   return true;
 }
