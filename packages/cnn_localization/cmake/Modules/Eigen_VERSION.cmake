@@ -1,0 +1,5 @@
+set(Eigen_URL http://bitbucket.org/eigen/eigen/get/3d41a24add9b.tar.gz)
+set(Eigen_ARCHIVE_HASH 3d41a24add9b)
+set(Eigen_HASH SHA256=ce91f8db04493096c0f8bd5ebca7f5a295c88874cda99b3e9d99c9ed10154f99)
+set(Eigen_DIR eigen-eigen-3d41a24add9b)
+set(Eigen_INSTALL_DIR /usr/local)

@@ -16,6 +16,7 @@
 #include <map_segmentation/segmenter.h>
 
 #include <map_segmentation/GetRegion.h>
+#include <map_segmentation/GetRegionCenter.h>
 #include <vector>
 #include <limits>
 
@@ -53,7 +54,7 @@ bool getRegion(map_segmentation::GetRegion::Request &req,
   return true;
 }
 
-bool getRegionCenter(map_segmentation::GetRegionCenter::Request &req
+bool getRegionCenter(map_segmentation::GetRegionCenter::Request &req,
                      map_segmentation::GetRegionCenter::Response &res)
 {
   for (uint i = 0; i < region_vector.size(); i++)
@@ -157,5 +158,8 @@ int main(int argc, char** argv)
   catch(pluginlib::PluginlibException &ex)
   {
     ROS_ERROR("Failed to load the segmenter for some reason. Error: %s", ex.what());
+    return 0;
   }
+
+  return 1;
 }
