@@ -19,6 +19,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 add_service_files(
   FILES
   GetRegion.srv
+  GetRegionCenter.srv
 )
 generate_messages(
   DEPENDENCIES

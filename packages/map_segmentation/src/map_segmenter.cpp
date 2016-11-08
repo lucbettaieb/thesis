@@ -53,15 +53,28 @@ bool getRegion(map_segmentation::GetRegion::Request &req,
   return true;
 }
 
+bool getRegionCenter(map_segmentation::GetRegionCenter::Request &req
+                     map_segmentation::GetRegionCenter::Response &res)
+{
+  for (uint i = 0; i < region_vector.size(); i++)
+  {
+    if (req.region_id.compare(region_vector.at(i).id) == 0)
+    {
+      res.frame_id = "map";  // TODO(lucbettaieb): Make this better..
+      res.x = region_vector.at(i).getCenter().x;
+      res.y = region_vector.at(i).getCenter().y;
+      return true;
+    }
+  }
+  return false;
+}
+
 // This should advertise a ROS service that, given a position, returns a region for a label
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "map_segmenter");
   ros::NodeHandle nh;
 
-  // Advertise service!
-  // Consider doing this after whatever lookup table is published...
-  ros::ServiceServer service = nh.advertiseService("get_region", getRegion);
 
   ros::Publisher region_center_pub = nh.advertise<visualization_msgs::MarkerArray>("/region_centers", 0);
 
@@ -90,6 +103,7 @@ int main(int argc, char** argv)
       ros::spinOnce();
     }
 
+    // Wait until the region vector is populated and then get them
     while (region_vector.size() == 0)
     {
       segmenter->getRegions(region_vector);
@@ -121,7 +135,8 @@ int main(int argc, char** argv)
       marker.scale.x = 0.5;
       marker.scale.y = 0.5;
       marker.scale.z = 0.5;
-      marker.color.a = 1.0; // Don't forget to set the alpha!
+
+      marker.color.a = 1.0;
       marker.color.r = 0.0;
       marker.color.g = 1.0;
       marker.color.b = 0.0;
@@ -131,9 +146,14 @@ int main(int argc, char** argv)
 
     region_center_pub.publish(region_centers);
 
+    // Advertise services!
+    ros::ServiceServer get_region_service = nh.advertiseService("get_region", getRegion);
+    ros::ServiceServer get_region_center_service = nh.advertiseService("get_region_center", getRegionCenter);
+
     ROS_INFO("Standing by.");
     ros::spin();
   }
+
   catch(pluginlib::PluginlibException &ex)
   {
     ROS_ERROR("Failed to load the segmenter for some reason. Error: %s", ex.what());
