@@ -13,7 +13,7 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
-
+#include <string>
 #include <tensorflow/core/public/session.h>
 #include <tensorflow/core/platform/env.h>
 
@@ -23,7 +23,7 @@ public:
   CNNLocalizer(ros::NodeHandle &nh);
   ~CNNLocalizer();
 
-  void run_image();
+  void runImage();
 
 private:
   ros::NodeHandle g_nh_;
@@ -33,10 +33,17 @@ private:
 
   sensor_msgs::Image g_most_recent_image_;
 
-  bool g_graph_loaded_;
+  std::string g_graph_path_;
 
-  void loadGraph(std::string pb_path);
+  bool g_got_image_ = false;
 
+  bool checkStatus(const tensorflow::Status &status);
+
+  // Tensorflow stuff
+  tensorflow::Session *g_tf_session_ptr_;
+
+  tensorflow::Status g_tf_status_;
+  tensorflow::GraphDef g_tf_graph_def_;
 };
 
 #endif  // CNN_LOCALIZATION_CNN_LOCALIZER_H
