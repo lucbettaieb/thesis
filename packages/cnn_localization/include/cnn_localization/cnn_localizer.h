@@ -20,14 +20,16 @@
 class CNNLocalizer
 {
 public:
-  CNNLocalizer();
+  CNNLocalizer(ros::NodeHandle &nh);
   ~CNNLocalizer();
 
   void run_image();
 
 private:
-  ros::Publisher marker_publisher;
-  ros::Subscriber image_subscriber;
+  ros::NodeHandle g_nh_;
+
+  ros::Publisher g_marker_publisher_;
+  ros::Subscriber g_image_subscriber_;
 
   sensor_msgs::Image g_most_recent_image_;
 

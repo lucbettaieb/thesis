@@ -6,3 +6,15 @@
  */
 
 #include <cnn_localization/cnn_localizer.h>
+
+CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
+{
+  // Gimme dat node handle
+  g_nh_ = nh;
+
+  // Check to see if parameter is set for path to peanutbutter
+  g_nh_.param<std::string>("")
+
+}
+
+CNNLocalizer::
