@@ -8,7 +8,7 @@
 #include <cnn_localization/cnn_localizer.h>
 
 #include <string>
-
+#include <tuple>
 CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
 {
   // Gimme dat node handle
@@ -57,12 +57,47 @@ bool CNNLocalizer::checkStatus(const tensorflow::Status &status)
   }
 }
 
-void CNNLocalizer::runImage()
+std::tuple<std::string, double> CNNLocalizer::runImage()
 {
+  std::tuple<std::string, double> result;
+  result.get<0> = "none";
+  result.get<1> = 0.0;
+
   if (g_got_image_)
   {
+    std::string label;
+
     // create a tensorflow::Tensor with the image information
-    // tensorflow::Tensor input_image(tf)
-    // Do tensorflow stuff here
+    tensorflow::TensorShape image_shape;
+    image_shape.AddDim(g_img_height_);
+    image_shape.AddDim(g_img_width_);
+
+    tensorflow::Tensor input_image(tensorflow::DT_INT8, image_shape);
+    // I have no idea how to make this work right now.  Copying data is very confusing..
+    for (uint i = 0; i < g_img_height_; i++)
+    {
+      for (uint j = 0; j < g_img_width_; j++)
+      {
+        // ??  Populate a matrix or something?
+      }
+    }
+    // Copy the matrix into the tensor?
+    // input_image.matrix<float>()() = z;
+  }
+
+  return result;
+}
+
+void CNNLocalizer::imageCB(const sensor_msgs::ImageConstPtr &msg)
+{
+  try
+  {
+    g_most_recent_image_ = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    g_img_height_ = msg->height;
+    g_img_width_ = msg->width;
+  }
+  catch (cv_bridge::Exception &e)
+  {
+    ROS_ERROR("Failed converting the received message: %s", e.what());
   }
 }

@@ -13,9 +13,16 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/Image.h>
+#include <sensor_msgs/image_encodings.h>
+
 #include <string>
+#include <tuple>
+
 #include <tensorflow/core/public/session.h>
 #include <tensorflow/core/platform/env.h>
+
+#include <cv_bridge/cv_bridge.h>
+#include <opencv2/imgproc/imgproc.hpp>
 
 class CNNLocalizer
 {
@@ -23,21 +30,23 @@ public:
   CNNLocalizer(ros::NodeHandle &nh);
   ~CNNLocalizer();
 
-  void runImage();
+  std::tuple<std::string, double> runImage();
 
 private:
   ros::NodeHandle g_nh_;
 
-  ros::Publisher g_marker_publisher_;
   ros::Subscriber g_image_subscriber_;
 
-  sensor_msgs::Image g_most_recent_image_;
+  cv_bridge::CvImagePtr g_most_recent_image_;
 
   std::string g_graph_path_;
 
   bool g_got_image_ = false;
-
+  bool g_img_height_ = 64;  // TODO(lucbettaieb) Make better
+  bool g_img_width_ = 64;
   bool checkStatus(const tensorflow::Status &status);
+
+  void imageCB(const sensor_msgs::ImageConstPtr &msg);
 
   // Tensorflow stuff
   tensorflow::Session *g_tf_session_ptr_;
