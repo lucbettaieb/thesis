@@ -111,7 +111,8 @@ int main(int argc, char** argv)
     }
 
     // Publish all region centers for visualization
-
+    // TODO(lucbettaieb): Make these interactive so that AMCL can be
+    // deemed untrustworthy
     for (uint i = 0; i < region_vector.size(); i++)
     {
       visualization_msgs::Marker marker;
