@@ -15,16 +15,20 @@
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 
+#include <opencv2/opencv.hpp>
+
 #include <boost/filesystem.hpp>
+
+#include <map_segmentation/GetRegion.h>
 
 const std::string R_ERROR = "ERROR";
 
-bool new_image;
-uint image_number, save_freq;
+bool g_new_image_;
+uint g_image_number_, g_save_freq_;
 
 
-std::string current_region;
-cv::Mat current_image;
+std::string g_current_region_;
+cv::Mat g_current_image_;
 
 ros::ServiceClient region_client;
 
@@ -34,9 +38,9 @@ void imgCB(const sensor_msgs::Image &msg)
   try
   {
     cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
-    current_image = cv_ptr->image;
-    new_image = true;
-    image_number++;
+    g_current_image_ = cv_ptr->image;
+    g_new_image_ = true;
+    g_image_number_++;
   }
   catch(cv_bridge::Exception& e)
   {
@@ -46,7 +50,7 @@ void imgCB(const sensor_msgs::Image &msg)
 
 void amclCB(const geometry_msgs::PoseWithCovarianceStamped &msg)
 {
-  float[36] covariance = msg.pose.covariance;
+  //float covariance [36] = msg.pose.covariance;
 
   // TODO(lucbettaieb): check for covariance things!
   map_segmentation::GetRegion srv;
@@ -55,12 +59,12 @@ void amclCB(const geometry_msgs::PoseWithCovarianceStamped &msg)
   if (region_client.call(srv))
   {
     ROS_INFO("Region client called with current AMCL pose.");
-    current_regioin = srv.response.region;
+    g_current_region_ = srv.response.region;
   }
   else
   {
     ROS_ERROR("Failed to call service... Something is wrong.");
-    current_region = ERROR;
+    g_current_region_ = R_ERROR;
   }
 }
 
@@ -69,23 +73,23 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "data_collector");
   ros::NodeHandle nh;
 
-  new_image = false;
-  image_number = 0;
-  current_region = R_ERROR;
+  g_new_image_ = false;
+  g_image_number_ = 0;
+  g_current_region_ = R_ERROR;
 
   region_client = nh.serviceClient<map_segmentation::GetRegion>("get_region");
 
   // TODO(lucbettaieb): Make these parameters
   ros::Subscriber amcl_sub = nh.subscribe("/amcl_pose", 1, amclCB);
   ros::Subscriber img_sub = nh.subscribe("/camera/rgb/image_raw/downsized", 1, imgCB);
-  save_freq = 15;
+  g_save_freq_ = 15;
 
   // TODO(lucbettaieb): Make this string comparison for better goodness (?)
   std::string map_name;
 
   // Maybe get rid of this?
   std::cout << "ENTER MAP NAME: ";
-  std::cin << map_name;
+  std::cin >> map_name;
   std::cout << std::endl;
 
   // TODO(lucbettaieb): Do string checking for nonfucky strings
@@ -105,28 +109,33 @@ int main(int argc, char** argv)
   }
 
   // TODO(lucbettaieb): Define heuristic for region and also get most coverage possible for map or interrupt
-  while (ros::ok() && current_region != R_ERROR)
+  while (ros::ok() && g_current_region_ != R_ERROR)
   {
     // Start saving training data to disk
     // Format
     // cnn_localization_<map_name>_<date>
     // /region_name1/img_n.jpg
     // /region_name2/img_n+1.jpg
-    if (new_image && (image_number % save_freq == 0))
+    if (g_new_image_ && (g_image_number_ % g_save_freq_ == 0))
     {
       // Begin image saving
       try
       {
-        cv::imwrite(path + image_number + ".jpg", current_image, cv::CV_IMWRITE_JPG_COMPRESSION);
+       // std::string img_name = path + g_image_number_ + ".jpg";
+        std::vector<int> compression_params;
+        compression_params.push_back(1);  // JPG quality
+        compression_params.push_back(80);  // TODO(lucbettaieb): make param???
+
+        cv::imwrite(path + std::to_string(g_image_number_) + ".jpg", g_current_image_, compression_params);
       }
-      catch(cv::runtime_error &e)
+      catch (std::runtime_error &e)
       {
         ROS_ERROR("OpenCV encountered an error doing imwrite: %s", e.what());
-        return 0;
+        return 1;
       }
-      new_image = false;
+      g_new_image_ = false;
     }
   }
 
-  return 1;
+  return 0;
 }

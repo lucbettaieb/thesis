@@ -4,6 +4,8 @@ project(data_collector)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   cv_bridge
@@ -23,14 +25,15 @@ include_directories(
   ${OpenCV_INCLUDE_DIRS}
 )
 
-## Declare a C++ executable
+# Declare a C++ executable
 add_executable(data_collector src/data_collector.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(data_collector_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(data_collector ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(data_collector_node
+target_link_libraries(data_collector
   ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
 )

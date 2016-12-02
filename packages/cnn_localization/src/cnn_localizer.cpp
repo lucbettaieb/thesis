@@ -60,8 +60,9 @@ bool CNNLocalizer::checkStatus(const tensorflow::Status &status)
 std::tuple<std::string, double> CNNLocalizer::runImage()
 {
   std::tuple<std::string, double> result;
-  result.get<0> = "none";
-  result.get<1> = 0.0;
+
+  std::get<0>(result) = "none";
+  std::get<1>(result) = 0.0;
 
   if (g_got_image_)
   {
