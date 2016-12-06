@@ -9,6 +9,10 @@
 
 #include <string>
 #include <tuple>
+#include <vector>
+#include <utility>
+#include <algorithm>
+
 CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
 {
   // Gimme dat node handle
@@ -40,6 +44,7 @@ CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
 CNNLocalizer::~CNNLocalizer()
 {
   // free(g_tf_session_ptr_);
+  g_tf_session_ptr_->Close();
   delete g_tf_session_ptr_;
 }
 
@@ -74,16 +79,56 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
     image_shape.AddDim(g_img_width_);
 
     tensorflow::Tensor input_image(tensorflow::DT_INT8, image_shape);
-    // I have no idea how to make this work right now.  Copying data is very confusing..
-    for (uint i = 0; i < g_img_height_; i++)
+    auto input_image_mapped = input_image.tensor<int, 3>();
+
+    const int* source_data = (int*)(g_most_recent_image_->image.data);
+    // Potentially do some normalization operations?  Maybe do this in img_downsize..
+
+    // https://gist.github.com/lucbettaieb/66c06f23de7a30b0ca0cccffb2bc732b
+    // Populate the input image tensor
+    for (int y = 0; y < g_img_height_; ++y)
     {
-      for (uint j = 0; j < g_img_width_; j++)
+      const int* source_row = source_data + (y * g_img_width_);
+      for (int x = 0; x < g_img_width_; ++x)
       {
-        // ??  Populate a matrix or something?
+        const int* source_pixel = source_row + x;
+        input_image_mapped(0, y, x) = *source_pixel;
       }
     }
-    // Copy the matrix into the tensor?
-    // input_image.matrix<float>()() = z;
+
+    std::vector<tensorflow::Tensor> finalOutput;
+    std::string InputName = "input";
+    std::string OutputName = "output";
+
+    tensorflow::Status run_status = g_tf_session_ptr_->Run({InputName, input_image}, {OutputName}, {}, &finalOutput);
+
+    std::cerr << "final output size = " << finalOutput.size() << std::endl;
+
+    tensorflow::Tensor output = std::move(finalOutput.at(0));
+
+    auto scores = output.flat<float>();
+    std::cerr << "scores size: " << scores.size() << std::endl;
+    std::vector<std::pair<float, std::string>> sorted;
+
+    for (uint i = 0; i <= 1000; ++i)
+    {
+      std::getline(label, line);
+      sorted.emplace_back(scores(i), line);
+      // std::cout << scores(i) << " / line=" << line << std::endl;
+    }
+
+    std::sort(sorted.begin(), sorted.end());
+    std::reverse(sorted.begin(), sorted.end());
+
+    std::cout << "size of the sorted file is " << sorted.size() << std::endl;
+
+    for (uint i = 0; i < 5; ++i)
+    {
+      std::cout << "The output of the current graph has category  " << sorted[i].second
+                << " with probability " << sorted[i].first << std::endl;
+    }
+    std::get<0>(result) = sorted[0].second;
+    std::get<1>(result) = sorted[0].first;
   }
 
   return result;
@@ -93,7 +138,7 @@ void CNNLocalizer::imageCB(const sensor_msgs::ImageConstPtr &msg)
 {
   try
   {
-    g_most_recent_image_ = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    g_most_recent_image_ = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::MONO8);
     g_img_height_ = msg->height;
     g_img_width_ = msg->width;
   }

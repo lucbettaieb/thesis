@@ -33,7 +33,8 @@ void imageCB(const sensor_msgs::ImageConstPtr &msg)
 
   try
   {
-    cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
+    // black and white
+    cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::MONO8);
     cv::Mat img_in = cv_ptr->image;
     cv::Size size(msg->height / g_scale_, msg->width / g_scale_);
 
@@ -53,7 +54,8 @@ void imageCB(const sensor_msgs::ImageConstPtr &msg)
   header.stamp = msg->header.stamp;
   header.frame_id = msg->header.frame_id;
 
-  img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, img_out);
+  // black and white
+  img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::MONO8, img_out);
   img_bridge.toImageMsg(img_msg);
 
   g_img_pub_.publish(img_msg);

@@ -22,7 +22,5 @@ if(EIGEN_FOUND)
     set(Eigen_INCLUDE_DIRS ${Eigen_INCLUDE_DIR} ${Eigen_INCLUDE_DIR}/${Eigen_DIR})
 endif()
 
-
-
 # hide locals from GUI
 mark_as_advanced(Eigen_INCLUDE_DIR)
