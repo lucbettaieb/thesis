@@ -1,0 +1,7 @@
+<launch>
+
+	<node pkg="img_downsize" type="img_downsize" name="img_downsize">
+		 <rosparam command="load" file="$(find img_downsize)/config/config.yaml" />
+	</node>
+
+</launch>
