@@ -36,7 +36,8 @@ void imageCB(const sensor_msgs::ImageConstPtr &msg)
     // black and white
     cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::MONO8);
     cv::Mat img_in = cv_ptr->image;
-    cv::Size size(msg->height / g_scale_, msg->width / g_scale_);
+
+    cv::Size size(msg->width / g_scale_, msg->height / g_scale_);
 
     // Do all image operations here
     cv::resize(img_in, img_out, size);

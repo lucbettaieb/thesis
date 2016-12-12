@@ -1,2 +1,4 @@
 graph_path: /home/luc/Desktop/output_graph.pb
 label_path: /home/luc/Desktop/output_labels.txt
+
+image_topic: /camera/rgb/image_raw/downsized

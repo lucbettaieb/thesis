@@ -7,43 +7,67 @@
 
 #include <cnn_localization/cnn_localizer.h>
 
-#include <string>
-#include <tuple>
-#include <vector>
-#include <utility>
+// C++ Standard Library
 #include <algorithm>
 #include <fstream>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
 {
   // Gimme dat node handle
   g_nh_ = nh;
 
+  ROS_INFO("Grabbing parameters from the parameter server.");
+
+  if (!g_nh_.getParam("graph_path", g_graph_path_))
+  {
+    // TODO(enhancement): Consider searching some common locations for PB files
+    g_graph_path_ = "/home/luc/Desktop/output_graph.pb";
+  }
+  if (!g_nh_.getParam("label_path", g_label_path_))
+  {
+    g_label_path_ = "/home/luc/Desktop/output_labels.txt";
+  }
+  if (!g_nh_.getParam("image_topic", g_image_topic_))
+  {
+    g_image_topic_ = "camera/rgb/image_raw";
+  }
+
+  // Set up image subscriber
+  g_image_subscriber_ = g_nh_.subscribe(g_image_topic_, 10, &CNNLocalizer::imageCB, this);
+ 
+  // TENSORFLOW STUFF
+  ROS_INFO("About to create a new tensorflow session.");
   g_tf_status_ = tensorflow::NewSession(tensorflow::SessionOptions(), &g_tf_session_ptr_);
   checkStatus(g_tf_status_);
 
-  // Check to see if parameter is set for path to peanutbutter
-  if (!g_nh_.getParam("graph_path", g_graph_path_))
-  {
-    g_graph_path_ = "/home/luc/Desktop/output_graph.pb";
-    // optionally search for a pb file in some common locations?
-  }
-
-  if (!g_nh_.getParam("label_path", g_label_path_))
-  {
-    g_graph_path_ = "/home/luc/Desktop/output_labels.txt";
-  }
-
   // Load the graph
+  ROS_INFO("Loading the graph.");
   g_tf_status_ = ReadBinaryProto(tensorflow::Env::Default(), g_graph_path_, &g_tf_graph_def_);
   checkStatus(g_tf_status_);
 
+  // Creating the session with the graph
+  ROS_INFO("Creating the session with the loaded graph.");
   g_tf_status_ = g_tf_session_ptr_->Create(g_tf_graph_def_);
   checkStatus(g_tf_status_);
 
-  g_tf_status_ = g_tf_session_ptr_->Create(g_tf_graph_def_);
-  checkStatus(g_tf_status_);
+  // Default image height and width.
+  // This is updated with each new image.
+  g_img_width_ = 64;
+  g_img_height_ = 64;
+
+  g_got_image_ = false;
 }
+
+// CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh, std::string graph_path, std::string label_path)
+// {
+//   CNNLocalizer(nh);
+//   g_graph_path_ = graph_path;
+//   g_label_path_ = label_path;
+// }
 
 CNNLocalizer::~CNNLocalizer()
 {
@@ -66,6 +90,7 @@ bool CNNLocalizer::checkStatus(const tensorflow::Status &status)
   }
 }
 
+// TODO(enhancement): Make this return a list for better results
 std::tuple<std::string, double> CNNLocalizer::runImage()
 {
   // First, create an empty result tuple
@@ -79,38 +104,52 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
   if (g_got_image_)
   {
     // create a tensorflow::Tensor with the image information
+    int depth = g_most_recent_image_->image.channels();
+
     tensorflow::TensorShape image_shape;
+    image_shape.AddDim(1);
     image_shape.AddDim(g_img_height_);
     image_shape.AddDim(g_img_width_);
+    image_shape.AddDim(depth);
+
+    std::cerr << g_most_recent_image_->image.channels() << std::endl;
 
     // Create the Tensor of integer type in the same shape as the image
-    tensorflow::Tensor input_image(tensorflow::DT_INT8, image_shape);
+    tensorflow::Tensor input_image(tensorflow::DT_FLOAT, image_shape);
 
     // Pull the Tensor out of the object to put data inside it
-    auto input_image_mapped = input_image.tensor<int, 3>();
+    auto input_image_mapped = input_image.tensor<float, 4>();
 
     // Grab a constant pointer to an integer stream of the image data
-    const int* source_data = (int*)(g_most_recent_image_->image.data);
+    const float* source_data = (float*)(g_most_recent_image_->image.data);
 
+    
     // Potentially do some normalization operations?  Maybe do this in img_downsize..
 
     // https://gist.github.com/lucbettaieb/66c06f23de7a30b0ca0cccffb2bc732b
     // Populate the input image tensor
+    ROS_INFO("about to populate tensor");
     for (int y = 0; y < g_img_height_; ++y)
     {
-      const int* source_row = source_data + (y * g_img_width_);
+      const float* source_row = source_data + (y * g_img_width_ * depth);
       for (int x = 0; x < g_img_width_; ++x)
       {
-        const int* source_pixel = source_row + x;
-        input_image_mapped(0, y, x) = *source_pixel;
+        const float* source_pixel = source_row + (x * depth);
+        for (int c = 0; c < depth; ++c)
+        {
+          const float* source_value = source_pixel + c;
+          input_image_mapped(0, y, x, c) = *source_value;
+        }
       }
     }
 
+    ROS_INFO("about to create var");
     // Create a vector of tensors to be populated by running the graph
     std::vector<tensorflow::Tensor> finalOutput;
     std::string InputName = "unknown_image";
     std::string OutputName = "output_vector";
 
+    ROS_INFO("about to run");
     // Run the input_image tensor through the graph and store the output in the output vector
     tensorflow::Status run_status = g_tf_session_ptr_->Run({{InputName, input_image}}, {OutputName}, {}, &finalOutput);
 
@@ -160,9 +199,11 @@ void CNNLocalizer::imageCB(const sensor_msgs::ImageConstPtr &msg)
 {
   try
   {
-    g_most_recent_image_ = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::MONO8);
+    g_most_recent_image_ = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
     g_img_height_ = msg->height;
     g_img_width_ = msg->width;
+
+    g_got_image_ = true;
   }
   catch (cv_bridge::Exception &e)
   {
