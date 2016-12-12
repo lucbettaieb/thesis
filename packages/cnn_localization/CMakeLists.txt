@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(TensorFlow REQUIRED)
 find_package(Eigen REQUIRED)
 find_package(Protobuf REQUIRED)
+find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 
 ## Generate messages in the 'msg' folder
@@ -50,8 +51,8 @@ find_package(Boost REQUIRED COMPONENTS system)
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES cnn_localization
-  CATKIN_DEPENDS roscpp
-#  DEPENDS system_lib
+  CATKIN_DEPENDS roscpp cv_bridge sensor_msgs image_transport
+#  DEPENDS system_libls
 )
 
 ###########
@@ -72,20 +73,24 @@ include_directories(
 
 ## Declare a C++ library
 add_library(cnn_localizer
-  			src/cnn_localizer.cpp
+  		    	src/cnn_localizer.cpp
 )
-add_dependencies(cnn_localizer ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(cnn_localizer cv_bridge ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 add_executable(demo_mode src/demo_mode.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(demo_mode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(demo_mode cnn_localizer ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(demo_mode
   ${catkin_LIBRARIES}
   ${Protobuf_LIBRARIES}
-  ${TensorFlow_INCLUDE_DIRS}
+  ${OpenCV_LIBRARIES}
+  cnn_localizer
+  /usr/local/lib/libtensorflow_all.so
+  
+  
 )

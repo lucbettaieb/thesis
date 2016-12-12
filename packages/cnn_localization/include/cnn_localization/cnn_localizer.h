@@ -40,6 +40,7 @@ private:
   cv_bridge::CvImagePtr g_most_recent_image_;
 
   std::string g_graph_path_;
+  std::string g_label_path_;
 
   bool g_got_image_ = false;
   bool g_img_height_ = 64;  // TODO(lucbettaieb) Make better
