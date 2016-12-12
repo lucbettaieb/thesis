@@ -75,7 +75,16 @@ include_directories(
 add_library(cnn_localizer
   		    	src/cnn_localizer.cpp
 )
+
 add_dependencies(cnn_localizer cv_bridge ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(cnn_localizer
+  ${catkin_LIBRARIES}
+  ${Protobuf_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+  ${TensorFlow_LIBRARY}
+)
+
 
 ## Declare a C++ executable
 add_executable(demo_mode src/demo_mode.cpp)
@@ -89,8 +98,6 @@ target_link_libraries(demo_mode
   ${catkin_LIBRARIES}
   ${Protobuf_LIBRARIES}
   ${OpenCV_LIBRARIES}
+  ${TensorFlow_LIBRARY}
   cnn_localizer
-  /usr/local/lib/libtensorflow_all.so
-  
-  
 )
