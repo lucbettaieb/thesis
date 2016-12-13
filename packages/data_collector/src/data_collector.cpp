@@ -29,13 +29,16 @@ typedef std::tuple<std::string, int> StringIntTuple;
 const std::string R_ERROR = "ERROR";
 
 bool g_new_image_;
-uint g_image_number_, g_save_freq_, g_n_images_required_;
+uint g_n_images_required_;
 
 std::vector<StringIntTuple> g_visited_regions_;
 bool g_in_saturated_region_;
 
+int g_current_region_index_;
 std::string g_current_region_;
 cv::Mat g_current_image_;
+
+std::string g_path_;
 
 ros::ServiceClient region_client;
 
@@ -76,15 +79,38 @@ bool isRegionVisitedAndSaturated(std::string region)
   // Region has not been visited
   return false;
 }
-void incrementCurrentRegionSnapshotIndex()
+
+bool incrementCurrentRegionSnapshotIndex()
 {
   for (uint i = 0; i < g_visited_regions_.size(); i++)
   {
     if (std::get<0>(g_visited_regions_.at(i)) == g_current_region_)
     {
-      std::get<1>(g_visited_regions_.at(i)) = std::get<1>(g_visited_regions_.at(i)) + 1;
+      std::cout << std::get<1>(g_visited_regions_.at(i)) << std::endl;
+      if (std::get<1>(g_visited_regions_.at(i)) < g_n_images_required_)
+      {
+        std::get<1>(g_visited_regions_.at(i)) = std::get<1>(g_visited_regions_.at(i)) + 1;
+        return true;
+      }
+      else
+      {
+        return false;
+      }
     }
   }
+  return false;
+}
+
+int getCurrentRegionNSnaphots()
+{
+  for (uint i = 0; i < g_visited_regions_.size(); i++)
+  {
+    if (std::get<0>(g_visited_regions_.at(i)) == g_current_region_)
+    {
+      return std::get<1>(g_visited_regions_.at(i));
+    }
+  }
+  return -1;
 }
 
 void imgCB(const sensor_msgs::Image &msg)
@@ -95,7 +121,6 @@ void imgCB(const sensor_msgs::Image &msg)
     cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
     g_current_image_ = cv_ptr->image;
     g_new_image_ = true;
-    g_image_number_++;
   }
   catch(cv_bridge::Exception& e)
   {
@@ -113,23 +138,41 @@ void amclCB(const geometry_msgs::PoseWithCovarianceStamped &msg)
 
   if (region_client.call(srv))
   {
-    if (!isRegionVisitedAndSaturated(srv.response.region))
+    if (isRegionVisitedAndSaturated(srv.response.region))
     {
-      g_in_saturated_region_ = false;
+      // Region has been visited and is saturated
+      ROS_INFO("Region is saturated, find a new region");
+
+      g_in_saturated_region_ = true;
     }
     else if (!isRegionVisited(srv.response.region))
     {
+      // Region has not been visited and should be added to the vector.
+      ROS_INFO("Region has not been visited.");
       StringIntTuple visited_region_tuple;
       std::get<0>(visited_region_tuple) = srv.response.region;
       std::get<1>(visited_region_tuple) = 0;
-
+      ROS_INFO("New region found, adding.");
       g_visited_regions_.push_back(visited_region_tuple);
+
+      boost::filesystem::path dir(g_path_ + "/" + srv.response.region);
+
+      if (boost::filesystem::create_directories(dir))
+      {
+        ROS_INFO("Created directory for new region!");
+      }
+      else
+      {
+        ROS_ERROR("Error creating directory!  THIS IS BAD!");
+      }
+
       g_in_saturated_region_ = false;
     }
     else
-    {
-      g_in_saturated_region_ = true;
-      ROS_ERROR("Visit another region!  It is currently saturated at the limit of training data.");
+    { 
+      // Region has been visited and does not need to be added to the vector
+      g_in_saturated_region_ = false;
+
     }
 
     g_current_region_ = srv.response.region;
@@ -147,8 +190,10 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
 
   g_new_image_ = false;
-  g_image_number_ = 0;
+
+
   g_current_region_ = R_ERROR;
+  g_current_region_index_ = 0;
   g_n_images_required_ = 40;
   g_in_saturated_region_ = false;
 
@@ -157,7 +202,7 @@ int main(int argc, char** argv)
   // TODO(lucbettaieb): Make these parameters
   ros::Subscriber amcl_sub = nh.subscribe("/amcl_pose", 1, amclCB);
   ros::Subscriber img_sub = nh.subscribe("/camera/rgb/image_raw/downsized", 1, imgCB);
-  ros::Rate naptime(1);  // 1 hz
+  ros::Rate naptime(5);  // 5 hz
 
   // TODO(lucbettaieb): Make this string comparison for better goodness (?)
   std::string map_name;
@@ -170,8 +215,8 @@ int main(int argc, char** argv)
   // TODO(lucbettaieb): Do string checking for nonfucky strings
 
   // TODO(lucbettaieb): Make a parameter and/or make this in /tmp and then put a zip file on desktop
-  std::string path = "/tmp/" + map_name;
-  boost::filesystem::path dir(path);
+  g_path_ = "/tmp/" + map_name;
+  boost::filesystem::path dir(g_path_);
 
   if (boost::filesystem::create_directories(dir))
   {
@@ -196,16 +241,22 @@ int main(int argc, char** argv)
       // Begin image saving
       try
       {
-       // std::string img_name = path + g_image_number_ + ".jpg";
         std::vector<int> compression_params;
         compression_params.push_back(1);  // JPG quality
         compression_params.push_back(80);  // TODO(lucbettaieb): make param???
 
         if (!g_in_saturated_region_)
         {
-          incrementCurrentRegionSnapshotIndex();
-
-          cv::imwrite(path + "/" + g_current_region_ + "_" + std::to_string(g_image_number_) + ".jpg", g_current_image_, compression_params);
+          if (incrementCurrentRegionSnapshotIndex())
+          {
+            cv::imwrite(g_path_ + "/" + g_current_region_ + "/" + std::to_string(getCurrentRegionNSnaphots()) + ".jpg", g_current_image_, compression_params);
+            std::cout << "Wrote new snapshot for region: " << g_current_region_ << std::endl;
+            g_new_image_ = false;
+          }
+          else
+          {
+            ROS_ERROR("FIND NEW REGION");
+          }
         }
       }
       catch (std::runtime_error &e)
@@ -213,8 +264,7 @@ int main(int argc, char** argv)
         ROS_ERROR("OpenCV encountered an error doing imwrite: %s", e.what());
         return 1;
       }
-      std::cout << "Wrote new snapshot for region: " << g_current_region_ << std::endl;
-      g_new_image_ = false;
+      
 
       naptime.sleep();
     }

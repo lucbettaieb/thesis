@@ -38,7 +38,7 @@ bool NaiveSegmenter::segment()
     return false;
   }
 
-  uint region_resolution = 30;  // TODO(lucbettaieb): parameterize this constant
+  uint region_resolution = 25;  // TODO(lucbettaieb): parameterize this constant
 
   nav_msgs::OccupancyGrid segmented_map = Segmenter::map_;
 
