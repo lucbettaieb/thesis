@@ -1,0 +1,7 @@
+<launch>
+
+  <node name="map_segmenter" pkg="map_segmentation" type="map_segmenter">
+    <rosparam command="load" file="$(find map_segmentation)/config/config.yaml" />
+  </node>
+
+</launch>

@@ -6,36 +6,43 @@
  * BSD Licensed
  */
 
-#include <ros/ros.h>
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <sensor_msgs/Image.h>
-
+// C++ Standard Library
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <tuple>
 
+// ROS
+#include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 
+// ROS Messages
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <sensor_msgs/Image.h>
+
+// OpenCV
 #include <opencv2/opencv.hpp>
 
+// Booost
 #include <boost/filesystem.hpp>
 
+// Map Segmentation
 #include <map_segmentation/GetRegion.h>
 
 typedef std::tuple<std::string, int> StringIntTuple;
 
 const std::string R_ERROR = "ERROR";
 
-bool g_new_image_;
-uint g_n_images_required_;
-
 std::vector<StringIntTuple> g_visited_regions_;
+
+bool g_new_image_;
 bool g_in_saturated_region_;
+int g_n_images_required_;
 
 int g_current_region_index_;
 std::string g_current_region_;
+
 cv::Mat g_current_image_;
 
 std::string g_path_;
@@ -141,7 +148,7 @@ void amclCB(const geometry_msgs::PoseWithCovarianceStamped &msg)
     if (isRegionVisitedAndSaturated(srv.response.region))
     {
       // Region has been visited and is saturated
-      ROS_INFO("Region is saturated, find a new region");
+      ROS_ERROR("Region saturated.  Find new region!");
 
       g_in_saturated_region_ = true;
     }
@@ -172,14 +179,13 @@ void amclCB(const geometry_msgs::PoseWithCovarianceStamped &msg)
     { 
       // Region has been visited and does not need to be added to the vector
       g_in_saturated_region_ = false;
-
     }
 
     g_current_region_ = srv.response.region;
   }
   else
   {
-    ROS_ERROR("Failed to call service... Something is wrong.");
+    ROS_WARN("Failed to call service... Something is wrong.");
     g_current_region_ = R_ERROR;
   }
 }
@@ -189,32 +195,35 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "data_collector");
   ros::NodeHandle nh;
 
-  g_new_image_ = false;
-
-
   g_current_region_ = R_ERROR;
   g_current_region_index_ = 0;
-  g_n_images_required_ = 40;
   g_in_saturated_region_ = false;
+  g_new_image_ = false;
 
+  // Load up the server client to get the current region
   region_client = nh.serviceClient<map_segmentation::GetRegion>("get_region");
 
-  // TODO(lucbettaieb): Make these parameters
+  // Load the number of samples required per region
+  nh.param<int>("data_collector/required_samples", g_n_images_required_, 30);
+
+  // Load in the image topic from the parameter server
+  std::string image_topic;
+  nh.param<std::string>("data_collector/image_topic", image_topic, "/camera/rgb/image_raw/downsized");
+  ros::Subscriber img_sub = nh.subscribe(image_topic, 1, imgCB);
+
+  // AMCL Pose is published to a set topic
   ros::Subscriber amcl_sub = nh.subscribe("/amcl_pose", 1, amclCB);
-  ros::Subscriber img_sub = nh.subscribe("/camera/rgb/image_raw/downsized", 1, imgCB);
-  ros::Rate naptime(5);  // 5 hz
+  
+  // Load in sampling frequency from the parameter server
+  int sampling_frequency;
+  nh.param<int>("data_collector/sampling_frequency", sampling_frequency, 5);
+  ros::Rate naptime(sampling_frequency);
 
-  // TODO(lucbettaieb): Make this string comparison for better goodness (?)
+  // Load the map name from the parameter server
   std::string map_name;
+  nh.param<std::string>("data_collector/map_name", map_name, "default_map");
 
-  // Maybe get rid of this?
-  std::cout << "ENTER MAP NAME: ";
-  std::cin >> map_name;
-  std::cout << std::endl;
-
-  // TODO(lucbettaieb): Do string checking for nonfucky strings
-
-  // TODO(lucbettaieb): Make a parameter and/or make this in /tmp and then put a zip file on desktop
+  // TODO(lucbettaieb): Do string checking to make sure the map name is OK
   g_path_ = "/tmp/" + map_name;
   boost::filesystem::path dir(g_path_);
 
@@ -228,14 +237,10 @@ int main(int argc, char** argv)
     return 0;
   }
 
-  // TODO(lucbettaieb): Define heuristic for region and also get most coverage possible for map or interrupt
+  // TODO(lucbettaieb): Put a zip file on desktop after completion?
+  // TODO(lucbettaieb): Define better heuristic for region and also get most coverage possible for map or interrupt
   while (ros::ok())
   {
-    // Start saving training data to disk
-    // Format
-    // cnn_localization_<map_name>_<date>
-    // /region_name1/img_n.jpg
-    // /region_name2/img_n+1.jpg
     if (g_new_image_ && (g_current_region_ != R_ERROR))
     {
       // Begin image saving
@@ -255,7 +260,7 @@ int main(int argc, char** argv)
           }
           else
           {
-            ROS_ERROR("FIND NEW REGION");
+            ROS_ERROR("Region saturated.  Find new region!");
           }
         }
       }
@@ -264,7 +269,6 @@ int main(int argc, char** argv)
         ROS_ERROR("OpenCV encountered an error doing imwrite: %s", e.what());
         return 1;
       }
-      
 
       naptime.sleep();
     }

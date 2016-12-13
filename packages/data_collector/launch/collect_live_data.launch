@@ -1,0 +1,20 @@
+<launch>
+  
+  <!-- Map Server -->
+  <arg name="map_file" default="$(find thesis_maps)/maps/office_tb_manual/office_tb_manual.yaml"/>
+  
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+  
+  <!-- Map Segmentation -->
+	<include file="$(find map_segmentation)/launch/segmenter.launch" />
+
+  <!-- AMCL -->
+  <node name="amcl" pkg="amcl" type="amcl" />
+
+  <!-- Data Collector -->
+  <node name="data_collector" pkg="data_collector" type="data_collector" output="screen">
+    <rosparam command="load" file="$(find data_collector)/config/config.yaml" />
+  </node>
+
+
+</launch>

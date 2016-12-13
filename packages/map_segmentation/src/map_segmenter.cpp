@@ -81,8 +81,9 @@ int main(int argc, char** argv)
 
   visualization_msgs::MarkerArray region_centers;
 
-  // Make this a parameter
-  std::string plugin_type = "segmenter_plugins::NaiveSegmenter";
+  // Load the plugin type from the parameter server
+  std::string plugin_type;
+  nh.param<std::string>("map_segmenter/segmenter", plugin_type, "segmenter_plugins::NaiveSegmenter");
 
   pluginlib::ClassLoader<Segmenter> segmenter_loader("map_segmentation", "Segmenter");
 
@@ -95,8 +96,10 @@ int main(int argc, char** argv)
 
     ROS_INFO("Loaded segmenter, going into spin.");
 
-    // Make this a parameter
-    ros::Rate naptime(0.5);
+    // Load segmentation rate from the parameter server
+    double segmentation_rate;
+    nh.param<double>("map_segmenter/segmentation_rate", segmentation_rate, 0.5);
+    ros::Rate naptime(segmentation_rate);
 
     while (ros::ok() && !segmenter->segment())
     {
