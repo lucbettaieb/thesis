@@ -14,6 +14,7 @@
 // C++ Standard Library
 #include <string>
 #include <tuple>
+#include <mutex>
 
 // ROS
 #include <ros/ros.h>
@@ -74,7 +75,7 @@ private:
   /*
    * @brief The most recent image acquired by the subscriber
    */
-  cv_bridge::CvImagePtr g_most_recent_image_;
+  cv::Mat g_most_recent_image_;
 
   /*
    * @brief The path to the TensorFlow graph that is to be loaded
@@ -115,6 +116,12 @@ private:
    * @brief The graph definition used by tensorflow when loading the graph
    */
   tensorflow::GraphDef g_tf_graph_def_;
+
+
+  std::mutex g_img_mutex_;
+
+  std::condition_variable g_cv_;
+
 
   /*
    * @brief Checks the status of a tensorflow::status, errors if something bad happens

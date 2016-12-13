@@ -81,7 +81,6 @@ add_dependencies(cnn_localizer cv_bridge ${${PROJECT_NAME}_EXPORTED_TARGETS} ${c
 target_link_libraries(cnn_localizer
   ${catkin_LIBRARIES}
   ${Protobuf_LIBRARIES}
-  ${OpenCV_LIBRARIES}
   ${TensorFlow_LIBRARY}
 )
 
@@ -97,7 +96,6 @@ add_dependencies(demo_mode cnn_localizer ${${PROJECT_NAME}_EXPORTED_TARGETS} ${c
 target_link_libraries(demo_mode
   ${catkin_LIBRARIES}
   ${Protobuf_LIBRARIES}
-  ${OpenCV_LIBRARIES}
   ${TensorFlow_LIBRARY}
   cnn_localizer
 )

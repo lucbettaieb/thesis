@@ -22,11 +22,11 @@ int main(int argc, char** argv)
   // localizer.reset(new CNNLocalizer(nh));
 
   ros::Rate naptime(10);
+  std::tuple<std::string, double> result;
   while (ros::ok())
   {
-    std::tuple<std::string, double> result;
-
-  	result = l.runImage();
+    ROS_INFO("dm run image");
+  	//result = l.runImage();
 
   	std::cout << "Result: " << std::get<0>(result) << ", " << std::get<1>(result) << std::endl;
   	
