@@ -73,5 +73,9 @@ int main(int argc, char** argv)
   g_img_pub_ = nh.advertise<sensor_msgs::Image>(g_image_topic_ + "/downsized", 1);
   g_img_sub_ = nh.subscribe(g_image_topic_, 10, imageCB);
 
-  ros::spin();
+  while(ros::ok())
+  {
+    ros::Rate(3).sleep();
+    ros::spinOnce();
+  }
 }

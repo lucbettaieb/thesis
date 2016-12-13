@@ -143,7 +143,7 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
         for (int c = 0; c < img_depth; ++c)
         {
           const float* source_value = source_pixel + c;
-          std::cout << "WIDTH: " << img_width << ", HEIGHT: " << img_height << ", DEPTH: " << img_depth << "| y: " << y << ", x: " << x << ", c: " << c << ", src val: " << *source_value << std::endl;
+          //std::cout << "WIDTH: " << img_width << ", HEIGHT: " << img_height << ", DEPTH: " << img_depth << "| y: " << y << ", x: " << x << ", c: " << c << ", src val: " << *source_value << std::endl;
           input_image_mapped(0, y, x, c) = *source_value;
         }
       }
