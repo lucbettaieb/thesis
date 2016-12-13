@@ -26,7 +26,7 @@ int main(int argc, char** argv)
   while (ros::ok())
   {
     ROS_INFO("dm run image");
-  	//result = l.runImage();
+  	result = l.runImage();
 
   	std::cout << "Result: " << std::get<0>(result) << ", " << std::get<1>(result) << std::endl;
   	

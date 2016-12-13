@@ -15,8 +15,6 @@
 #include <utility>
 #include <vector>
 
-bool g_img_ready = true;
-
 CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
 {
   // Gimme dat node handle
@@ -39,7 +37,8 @@ CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
   }
 
   // Set up image subscriber
-  g_image_subscriber_ = g_nh_.subscribe(g_image_topic_, 10, &CNNLocalizer::imageCB, this);
+  image_transport::ImageTransport it(g_nh_);
+  g_image_subscriber_ = it.subscribe(g_image_topic_, 10, &CNNLocalizer::imageCB, this);
  
   // TENSORFLOW STUFF
   ROS_INFO("About to create a new tensorflow session.");
@@ -95,8 +94,6 @@ bool CNNLocalizer::checkStatus(const tensorflow::Status &status)
 // TODO(enhancement): Make this return a list for better results
 std::tuple<std::string, double> CNNLocalizer::runImage()
 {
-  g_img_ready = false;
-  
   // First, create an empty result tuple
   std::tuple<std::string, double> result;
 
@@ -109,15 +106,12 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
   if (g_got_image_)
   {
     ROS_INFO("GOT IMG RUN");
+
     // create a tensorflow::Tensor with the image information
-    cv::Mat recent_image = g_most_recent_image_;
-    cv::Mat xverted_img;
-    ROS_INFO("help");
-    recent_image.convertTo(xverted_img, CV_32FC3);
-    ROS_INFO("CONVERTED");
-    int img_depth = xverted_img.channels();
-    int img_width = xverted_img.cols;
-    int img_height = xverted_img.rows;
+
+    int img_depth = g_most_recent_image_.channels();
+    int img_width = g_most_recent_image_.cols;
+    int img_height = g_most_recent_image_.rows;
 
     tensorflow::TensorShape image_shape;
     image_shape.AddDim(1);
@@ -132,7 +126,7 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
     auto input_image_mapped = input_image.tensor<float, 4>();
 
     // Grab a constant pointer to an integer stream of the image data
-    const float* source_data = (float*)(xverted_img.data);
+    const float* source_data = (float*)(g_most_recent_image_.data);
 
 
     // Potentially do some normalization operations?  Maybe do this in img_downsize..
@@ -202,33 +196,26 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
     // Set result to the "best" outcome!
     std::get<0>(result) = sorted[0].second;
     std::get<1>(result) = sorted[0].first;
-
-    g_img_ready = true;
   }
 
-  
   return result;
 }
 
 void CNNLocalizer::imageCB(const sensor_msgs::ImageConstPtr &msg)
 {
-  // std::unique_lock<std::mutex> lk(g_img_mutex_);
-
-  // if (!g_got_image_)
-  //   g_cv_.wait(lk, []{return g_img_ready;});
-
   cv_bridge::CvImagePtr cv_ptr;
 
   try
   {
-    ROS_ERROR("DO I GOT IT");
-    cv_ptr = cv_bridge::toCvCopy(msg);
-    ROS_ERROR("WHERE AM I");
+    // SEGFAULTINESS HERE!!!
+    cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
 
-    ROS_INFO("image?");
-    g_most_recent_image_ = cv_ptr->image;
+    ROS_INFO("Attempt!");
+    cv::Mat image = cv_ptr->image.clone();
+    ROS_INFO("Success!");
 
-    ROS_INFO("image!");
+    image.convertTo(g_most_recent_image_, CV_32FC3);
+
     g_img_height_ = msg->height;
     g_img_width_ = msg->width;
 
@@ -239,5 +226,4 @@ void CNNLocalizer::imageCB(const sensor_msgs::ImageConstPtr &msg)
     ROS_ERROR("Failed converting the received message: %s", e.what());
     return;
   }
-  // lk.unlock();
 }

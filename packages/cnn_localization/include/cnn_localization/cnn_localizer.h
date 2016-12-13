@@ -19,6 +19,7 @@
 // ROS
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
 
 // ROS Messages
 #include <sensor_msgs/Image.h>
@@ -70,7 +71,7 @@ private:
   /*
    * @brief The global subscriber to get the most recent image
    */
-  ros::Subscriber g_image_subscriber_;
+  image_transport::Subscriber g_image_subscriber_;
 
   /*
    * @brief The most recent image acquired by the subscriber
@@ -116,12 +117,6 @@ private:
    * @brief The graph definition used by tensorflow when loading the graph
    */
   tensorflow::GraphDef g_tf_graph_def_;
-
-
-  std::mutex g_img_mutex_;
-
-  std::condition_variable g_cv_;
-
 
   /*
    * @brief Checks the status of a tensorflow::status, errors if something bad happens
