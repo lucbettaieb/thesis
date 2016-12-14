@@ -25,11 +25,11 @@ CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
   if (!g_nh_.getParam("graph_path", g_graph_path_))
   {
     // TODO(enhancement): Consider searching some common locations for PB files
-    g_graph_path_ = "/home/luc/Desktop/output_graph_bgr8.pb";
+    g_graph_path_ = "/home/luc/Desktop/rgb_graph/output_graph.pb";
   }
   if (!g_nh_.getParam("label_path", g_label_path_))
   {
-    g_label_path_ = "/home/luc/Desktop/output_labels_bgr8.txt";
+    g_label_path_ = "/home/luc/Desktop/rgb_graph/output_labels.txt";
   }
   if (!g_nh_.getParam("image_topic", g_image_topic_))
   {
@@ -170,7 +170,7 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
     std::ifstream label(g_label_path_);
     std::string line;
 
-    for (uint i = 0; i <= 21; ++i)
+    for (uint i = 0; i <= 5; ++i)
     {
       std::getline(label, line);
       sorted.emplace_back(scores(i), line);

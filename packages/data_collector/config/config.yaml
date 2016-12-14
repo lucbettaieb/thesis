@@ -1,4 +1,4 @@
 map_name: office_manual
 sampling_frequency: 5
-sampled_required: 40
+required_samples: 40
 image_topic: /camera/rgb/image_raw/downsized
