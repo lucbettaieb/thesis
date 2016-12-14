@@ -25,11 +25,11 @@ CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
   if (!g_nh_.getParam("graph_path", g_graph_path_))
   {
     // TODO(enhancement): Consider searching some common locations for PB files
-    g_graph_path_ = "/home/luc/Desktop/output_graph.pb";
+    g_graph_path_ = "/home/luc/Desktop/output_graph_bgr8.pb";
   }
   if (!g_nh_.getParam("label_path", g_label_path_))
   {
-    g_label_path_ = "/home/luc/Desktop/output_labels.txt";
+    g_label_path_ = "/home/luc/Desktop/output_labels_bgr8.txt";
   }
   if (!g_nh_.getParam("image_topic", g_image_topic_))
   {
@@ -57,8 +57,8 @@ CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
 
   // Default image height and width.
   // This is updated with each new image.
-  g_img_width_ = 64;
-  g_img_height_ = 64;
+  g_img_width_ = 128;
+  g_img_height_ = 96;
 
   g_got_image_ = false;
 }
@@ -101,15 +101,12 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
   std::get<0>(result) = "none";
   std::get<1>(result) = 0.0;
 
-  ROS_INFO("ABOUT TO RUN");
   // If there is an image..
   if (g_got_image_)
   {
-    ROS_INFO("GOT IMG RUN");
-
     // create a tensorflow::Tensor with the image information
 
-    int img_depth = g_most_recent_image_.channels();
+    int img_depth = 3;// = g_most_recent_image_.channels();
     int img_width = g_most_recent_image_.cols;
     int img_height = g_most_recent_image_.rows;
 
@@ -133,7 +130,7 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
 
     // https://gist.github.com/lucbettaieb/66c06f23de7a30b0ca0cccffb2bc732b
     // Populate the input image tensor
-    ROS_INFO("about to populate tensor");
+
     for (int y = 0; y < img_height; ++y)
     {
       const float* source_row = source_data + (y * img_width * img_depth);
@@ -149,33 +146,31 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
       }
     }
 
-    ROS_INFO("about to create var");
     // Create a vector of tensors to be populated by running the graph
     std::vector<tensorflow::Tensor> finalOutput;
-    std::string InputName = "unknown_image";
-    std::string OutputName = "output_vector";
+    std::string InputName = "Mul";
+    std::string OutputName = "pool_3";
 
-    ROS_INFO("about to run");
     // Run the input_image tensor through the graph and store the output in the output vector
     tensorflow::Status run_status = g_tf_session_ptr_->Run({{InputName, input_image}}, {OutputName}, {}, &finalOutput);
 
     checkStatus(run_status);
 
-    std::cerr << "final output size = " << finalOutput.size() << std::endl;
+    //std::cerr << "final output size = " << finalOutput.size() << std::endl;
 
     // Move the first Tensor from the output to its own piece of real estate
     tensorflow::Tensor output = std::move(finalOutput.at(0));
 
     // Getting the scores from the first tensor
     auto scores = output.flat<float>();
-    std::cerr << "scores size: " << scores.size() << std::endl;
+    //std::cerr << "scores size: " << scores.size() << std::endl;
     std::vector<std::pair<float, std::string>> sorted;
 
     // Label File Name
-    std::string labelfile = "../../model/imagenet_comp_graph_label_strings.txt";  // PARAM THIS
-    std::ifstream label(labelfile);
+    std::ifstream label(g_label_path_);
     std::string line;
-    for (uint i = 0; i <= 1000; ++i)
+
+    for (uint i = 0; i <= 21; ++i)
     {
       std::getline(label, line);
       sorted.emplace_back(scores(i), line);
@@ -185,13 +180,13 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
     std::sort(sorted.begin(), sorted.end());
     std::reverse(sorted.begin(), sorted.end());
 
-    std::cout << "size of the sorted file is " << sorted.size() << std::endl;
+    // std::cout << "size of the sorted file is " << sorted.size() << std::endl;
 
-    for (uint i = 0; i < 5; ++i)
-    {
-      std::cout << "The output of the current graph has category  " << sorted[i].second
-                << " with probability " << sorted[i].first << std::endl;
-    }
+    // for (uint i = 0; i < 5; ++i)
+    // {
+    //   std::cout << "The output of the current graph has category  " << sorted[i].second
+    //             << " with probability " << sorted[i].first << std::endl;
+    // }
 
     // Set result to the "best" outcome!
     std::get<0>(result) = sorted[0].second;
@@ -210,9 +205,7 @@ void CNNLocalizer::imageCB(const sensor_msgs::ImageConstPtr &msg)
     // SEGFAULTINESS HERE!!!
     cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
 
-    ROS_INFO("Attempt!");
     cv::Mat image = cv_ptr->image.clone();
-    ROS_INFO("Success!");
 
     image.convertTo(g_most_recent_image_, CV_32FC3);
 

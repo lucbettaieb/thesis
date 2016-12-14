@@ -25,7 +25,7 @@ int main(int argc, char** argv)
   std::tuple<std::string, double> result;
   while (ros::ok())
   {
-    ROS_INFO("dm run image");
+    // ROS_INFO("dm run image");
   	result = l.runImage();
 
   	std::cout << "Result: " << std::get<0>(result) << ", " << std::get<1>(result) << std::endl;
