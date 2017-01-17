@@ -126,12 +126,12 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
     // Grab a constant pointer to an integer stream of the image data
     const float* source_data = (float*)(g_most_recent_image_.data);
 
-
     // Potentially do some normalization operations?  Maybe do this in img_downsize..
 
     // https://gist.github.com/lucbettaieb/66c06f23de7a30b0ca0cccffb2bc732b
     // Populate the input image tensor
 
+    auto start = ros::Time::now();
     for (int y = 0; y < img_height; ++y)
     {
       const float* source_row = source_data + (y * img_width * img_depth);
@@ -141,23 +141,27 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
         for (int c = 0; c < img_depth; ++c)
         {
           const float* source_value = source_pixel + c;
-          //std::cout << "WIDTH: " << img_width << ", HEIGHT: " << img_height << ", DEPTH: " << img_depth << "| y: " << y << ", x: " << x << ", c: " << c << ", src val: " << *source_value << std::endl;
+          // std::cout << "WIDTH: " << img_width << ", HEIGHT: " << img_height << ", DEPTH: " << img_depth << "| y: " << y << ", x: " << x << ", c: " << c << ", src val: " << *source_value << std::endl;
           input_image_mapped(0, y, x, c) = *source_value;
         }
       }
     }
+    auto end = ros::Time::now();
+    std::cerr << "Copy finished in: " << end.toSec() - start.toSec() << std::endl;
 
     // Create a vector of tensors to be populated by running the graph
     std::vector<tensorflow::Tensor> finalOutput;
-    std::string InputName = "Mul";
+    std::string InputName = "Mul";  // TODO(lucbetaieb): These seem to be correct but I should make sure
     std::string OutputName = "pool_3";
 
     // Run the input_image tensor through the graph and store the output in the output vector
+
+    start = ros::Time::now();
     tensorflow::Status run_status = g_tf_session_ptr_->Run({{InputName, input_image}}, {OutputName}, {}, &finalOutput);
+    end = ros::Time::now();
+    std::cerr << "Run finished in: " << end.toSec() - start.toSec() << std::endl;
 
     checkStatus(run_status);
-
-    //std::cerr << "final output size = " << finalOutput.size() << std::endl;
 
     // Move the first Tensor from the output to its own piece of real estate
     tensorflow::Tensor output = std::move(finalOutput.at(0));
