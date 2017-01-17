@@ -36,11 +36,9 @@ const std::string R_ERROR = "ERROR";
 
 std::vector<StringIntTuple> g_visited_regions_;
 
-bool g_new_image_;
-bool g_in_saturated_region_;
-int g_n_images_required_;
+bool g_new_image_, g_in_saturated_region_;
+int g_current_region_index_, g_n_images_required_;
 
-int g_current_region_index_;
 std::string g_current_region_;
 
 cv::Mat g_current_image_;

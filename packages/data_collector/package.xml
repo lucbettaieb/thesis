@@ -4,11 +4,11 @@
   <version>0.0.1</version>
   <description>The data_collector package</description>
 
-  <maintainer email="bettaieb@case.edu">Luc Bettaieb</maintainer>
+  <author email="bettaieb@case.edu">Luc Bettaieb</author>
 
   <license>BSD</license>
 
-  <author email="luc.bettaieb@gmail.com">Luc Bettaieb</author>
+  <maintainer email="luc.bettaieb@gmail.com">Luc Bettaieb</maintainer>
 
   <buildtool_depend>catkin</buildtool_depend>
 

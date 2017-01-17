@@ -5,8 +5,6 @@
  * BSD Licensed
  */
 
-#include <cnn_localization/cnn_localizer.h>
-
 // C++ Standard Library
 #include <algorithm>
 #include <fstream>
@@ -14,6 +12,9 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+
+// CNN Localizer
+#include <cnn_localization/cnn_localizer.h>
 
 CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
 {
