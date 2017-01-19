@@ -16,6 +16,9 @@
 #include <tuple>
 #include <mutex>
 
+// Boost
+#include <boost/thread/mutex.hpp>
+
 // ROS
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
@@ -106,7 +109,7 @@ private:
   /*
    * @brief The tensorflow session ptr that is going to be loaded
    */
-  tensorflow::Session *g_tf_session_ptr_;
+  std::unique_ptr<tensorflow::Session> g_tf_session_ptr_;
 
   /*
    * @brief The status continually checked while loading the graph initially
@@ -128,6 +131,8 @@ private:
    * @brief The image callback for the image subscriber
    */
   void imageCB(const sensor_msgs::ImageConstPtr &msg);
+
+  boost::mutex g_mutex_;
 };
 
 #endif  // CNN_LOCALIZATION_CNN_LOCALIZER_H

@@ -43,8 +43,11 @@ CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
  
   // TENSORFLOW STUFF
   ROS_INFO("About to create a new tensorflow session.");
-  g_tf_status_ = tensorflow::NewSession(tensorflow::SessionOptions(), &g_tf_session_ptr_);
-  checkStatus(g_tf_status_);
+
+  tensorflow::SessionOptions options;
+  g_tf_session_ptr_.reset(tensorflow::NewSession(options));
+
+  // (g_tf_status_);
 
   // Load the graph
   ROS_INFO("Loading the graph.");
@@ -73,9 +76,7 @@ CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
 
 CNNLocalizer::~CNNLocalizer()
 {
-  // free(g_tf_session_ptr_);
   g_tf_session_ptr_->Close();
-  delete g_tf_session_ptr_;
 }
 
 bool CNNLocalizer::checkStatus(const tensorflow::Status &status)
@@ -123,6 +124,10 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
     // Pull the Tensor out of the object to put data inside it
     auto input_image_mapped = input_image.tensor<float, 4>();
 
+    // TEST TEST TEST TEST TEST
+    // Lock the mutex
+    g_mutex_.lock();
+
     // Grab a constant pointer to an integer stream of the image data
     const float* source_data = (float*)(g_most_recent_image_.data);
 
@@ -160,6 +165,10 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
     tensorflow::Status run_status = g_tf_session_ptr_->Run({{InputName, input_image}}, {OutputName}, {}, &finalOutput);
     end = ros::Time::now();
     std::cerr << "Run finished in: " << end.toSec() - start.toSec() << std::endl;
+
+    // TEST TEST TEST TEST TEST
+    // unlock the mutex
+    g_mutex_.unlock();
 
     checkStatus(run_status);
 
@@ -203,6 +212,8 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
 
 void CNNLocalizer::imageCB(const sensor_msgs::ImageConstPtr &msg)
 {
+  g_mutex_.lock();
+
   cv_bridge::CvImagePtr cv_ptr;
 
   try
@@ -224,4 +235,6 @@ void CNNLocalizer::imageCB(const sensor_msgs::ImageConstPtr &msg)
     ROS_ERROR("Failed converting the received message: %s", e.what());
     return;
   }
+
+  g_mutex_.unlock();
 }
