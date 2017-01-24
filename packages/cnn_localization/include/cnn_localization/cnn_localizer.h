@@ -29,6 +29,8 @@
 #include <sensor_msgs/image_encodings.h>
 
 // TensorFlow
+#include <tensorflow/core/framework/graph.pb.h>
+
 #include <tensorflow/core/public/session.h>
 #include <tensorflow/core/platform/env.h>
 

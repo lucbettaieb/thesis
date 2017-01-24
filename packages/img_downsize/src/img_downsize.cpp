@@ -34,7 +34,7 @@ void imageCB(const sensor_msgs::ImageConstPtr &msg)
   try
   {
     // black and white
-    cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::MONO8);
+    cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8 );
     cv::Mat img_in = cv_ptr->image;
 
     cv::Size size(msg->width / g_scale_, msg->height / g_scale_);
@@ -55,8 +55,7 @@ void imageCB(const sensor_msgs::ImageConstPtr &msg)
   header.stamp = msg->header.stamp;
   header.frame_id = msg->header.frame_id;
 
-  // black and white
-  img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::MONO8, img_out);
+  img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::BGR8, img_out);
   img_bridge.toImageMsg(img_msg);
 
   g_img_pub_.publish(img_msg);
@@ -69,7 +68,7 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
 
   nh.param<std::string>("image_topic", g_image_topic_, "/camera/rgb/image_raw");
-  nh.param<int>("scale", g_scale_, 5);
+  nh.param<int>("scale", g_scale_, 2);
 
   g_img_pub_ = nh.advertise<sensor_msgs::Image>(g_image_topic_ + "/downsized", 1);
   g_img_sub_ = nh.subscribe(g_image_topic_, 10, imageCB);

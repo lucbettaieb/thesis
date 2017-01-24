@@ -1,53 +1,46 @@
-/* 
+/*
  * data_collector
- * subscribes to img downsize and saves image to a directory
  *
  * Copyright (c) 2016, Luc Bettaieb
  * BSD Licensed
  */
 
-// C++ Standard Library
-#include <string>
-#include <vector>
-#include <algorithm>
-#include <tuple>
+DataCollector::DataCollector(ros::NodeHandle &nh)
+{
+  g_nh_ = nh;
+}
 
-// ROS
-#include <ros/ros.h>
-#include <cv_bridge/cv_bridge.h>
-#include <image_transport/image_transport.h>
+DataCollector::~DataCollector()
+{
+  g_current_region_ = R_ERROR;
+  g_current_region_index_ = 0;
+  g_in_saturated_region_ = false;
+  g_new_image_ = false;
 
-// ROS Messages
-#include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <sensor_msgs/Image.h>
+  // Load up the server client to get the current region
+  g_region_client_ = nh.serviceClient<map_segmentation::GetRegion>("get_region");
 
-// OpenCV
-#include <opencv2/opencv.hpp>
+  // Load the number of samples required per region
+  nh.param<int>("data_collector/required_samples", g_n_images_required_, 30);
 
-// Booost
-#include <boost/filesystem.hpp>
+  // Load in the image topic from the parameter server
+  std::string image_topic;
+  nh.param<std::string>("data_collector/image_topic", image_topic, "/camera/rgb/image_raw/downsized");
+  ros::Subscriber img_sub = nh.subscribe(image_topic, 1, &DataCollector::imgCB, this);
 
-// Map Segmentation
-#include <map_segmentation/GetRegion.h>
+  // AMCL Pose is published to a set topic
+  ros::Subscriber amcl_sub = nh.subscribe("/amcl_pose", 1, &DataCollector::amclCB, this);
+  
 
-typedef std::tuple<std::string, int> StringIntTuple;
+}
 
-const std::string R_ERROR = "ERROR";
+bool DataCollector::collectData()
+{
+  
+  return true;
+}
 
-std::vector<StringIntTuple> g_visited_regions_;
-
-bool g_new_image_, g_in_saturated_region_;
-int g_current_region_index_, g_n_images_required_;
-
-std::string g_current_region_;
-
-cv::Mat g_current_image_;
-
-std::string g_path_;
-
-ros::ServiceClient region_client;
-
-bool isRegionVisited(std::string region)
+bool DataCollector::isRegionVisited(std::string region)
 {
   // TODO(enhancement): Make this more runtime efficient
   for (uint i = 0; i < g_visited_regions_.size(); i++)
@@ -61,7 +54,7 @@ bool isRegionVisited(std::string region)
   // Region has not been visited
   return false;
 }
-bool isRegionVisitedAndSaturated(std::string region)
+bool DataCollector::isRegionVisitedAndSaturated(std::string region)
 {
   // TODO(enhancement): Make this more runtime efficient
   for (uint i = 0; i < g_visited_regions_.size(); i++)
@@ -85,7 +78,7 @@ bool isRegionVisitedAndSaturated(std::string region)
   return false;
 }
 
-bool incrementCurrentRegionSnapshotIndex()
+bool DataCollector::incrementCurrentRegionSnapshotIndex()
 {
   for (uint i = 0; i < g_visited_regions_.size(); i++)
   {
@@ -106,7 +99,7 @@ bool incrementCurrentRegionSnapshotIndex()
   return false;
 }
 
-int getCurrentRegionNSnaphots()
+int DataCollector::getCurrentRegionNSnaphots()
 {
   for (uint i = 0; i < g_visited_regions_.size(); i++)
   {
@@ -118,7 +111,7 @@ int getCurrentRegionNSnaphots()
   return -1;
 }
 
-void imgCB(const sensor_msgs::Image &msg)
+void DataCollector::imgCB(const sensor_msgs::Image &msg)
 {
   cv_bridge::CvImagePtr cv_ptr;
   try
@@ -133,7 +126,8 @@ void imgCB(const sensor_msgs::Image &msg)
   }
 }
 
-void amclCB(const geometry_msgs::PoseWithCovarianceStamped &msg)
+
+void DataCollector::amclCB(const geometry_msgs::PoseWithCovarianceStamped &msg)
 {
   // float covariance [36] = msg.pose.covariance;
 
@@ -186,93 +180,4 @@ void amclCB(const geometry_msgs::PoseWithCovarianceStamped &msg)
     ROS_WARN("Failed to call service... Something is wrong.");
     g_current_region_ = R_ERROR;
   }
-}
-
-int main(int argc, char** argv)
-{
-  ros::init(argc, argv, "data_collector");
-  ros::NodeHandle nh;
-
-  g_current_region_ = R_ERROR;
-  g_current_region_index_ = 0;
-  g_in_saturated_region_ = false;
-  g_new_image_ = false;
-
-  // Load up the server client to get the current region
-  region_client = nh.serviceClient<map_segmentation::GetRegion>("get_region");
-
-  // Load the number of samples required per region
-  nh.param<int>("data_collector/required_samples", g_n_images_required_, 30);
-
-  // Load in the image topic from the parameter server
-  std::string image_topic;
-  nh.param<std::string>("data_collector/image_topic", image_topic, "/camera/rgb/image_raw/downsized");
-  ros::Subscriber img_sub = nh.subscribe(image_topic, 1, imgCB);
-
-  // AMCL Pose is published to a set topic
-  ros::Subscriber amcl_sub = nh.subscribe("/amcl_pose", 1, amclCB);
-  
-  // Load in sampling frequency from the parameter server
-  int sampling_frequency;
-  nh.param<int>("data_collector/sampling_frequency", sampling_frequency, 5);
-  ros::Rate naptime(sampling_frequency);
-
-  // Load the map name from the parameter server
-  std::string map_name;
-  nh.param<std::string>("data_collector/map_name", map_name, "default_map");
-
-  // TODO(lucbettaieb): Do string checking to make sure the map name is OK
-  g_path_ = "/tmp/" + map_name;
-  boost::filesystem::path dir(g_path_);
-
-  if (boost::filesystem::create_directories(dir))
-  {
-    ROS_INFO("Created directory!");
-  }
-  else
-  {
-    ROS_ERROR("Error creating directory!  Terminating program.");
-    return 0;
-  }
-
-  // TODO(lucbettaieb): Put a zip file on desktop after completion?
-  // TODO(lucbettaieb): Define better heuristic for region and also get most coverage possible for map or interrupt
-  while (ros::ok())
-  {
-    if (g_new_image_ && (g_current_region_ != R_ERROR))
-    {
-      // Begin image saving
-      try
-      {
-        std::vector<int> compression_params;
-        compression_params.push_back(1);  // JPG quality
-        compression_params.push_back(80);  // TODO(lucbettaieb): make param???
-
-        if (!g_in_saturated_region_)
-        {
-          if (incrementCurrentRegionSnapshotIndex())
-          {
-            cv::imwrite(g_path_ + "/" + g_current_region_ + "/" + std::to_string(getCurrentRegionNSnaphots()) + ".jpg", g_current_image_, compression_params);
-            std::cout << "Wrote new snapshot for region: " << g_current_region_ << std::endl;
-            g_new_image_ = false;
-          }
-          else
-          {
-            ROS_ERROR("Region saturated.  Find new region!");
-          }
-        }
-      }
-      catch (std::runtime_error &e)
-      {
-        ROS_ERROR("OpenCV encountered an error doing imwrite: %s", e.what());
-        return 1;
-      }
-
-      naptime.sleep();
-    }
-
-    ros::spinOnce();
-  }
-
-  return 0;
 }
