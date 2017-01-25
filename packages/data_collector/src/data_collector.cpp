@@ -5,6 +5,11 @@
  * BSD Licensed
  */
 
+#include <vector>
+#include <string>
+
+#include <data_collector/data_collector.h>
+
 DataCollector::DataCollector(ros::NodeHandle &nh)
 {
   g_nh_ = nh;
@@ -30,13 +35,63 @@ DataCollector::~DataCollector()
 
   // AMCL Pose is published to a set topic
   ros::Subscriber amcl_sub = nh.subscribe("/amcl_pose", 1, &DataCollector::amclCB, this);
-  
 
+  // Load the map name from the parameter server
+  nh.param<std::string>("data_collector/map_name", g_map_name_, "default_map");
+
+  g_have_directory_ = false;
 }
 
 bool DataCollector::collectData()
 {
-  
+  if (!g_have_directory_)
+  {
+    // TODO(lucbettaieb): Do string checking to make sure the map name is OK
+    g_path_ = "/tmp/" + map_name;
+    boost::filesystem::path dir(g_path_);
+
+    if (boost::filesystem::create_directories(dir))
+    {
+      ROS_INFO("Created directory!");
+    }
+    else
+    {
+      ROS_ERROR("Error creating directory!  Terminating program.");
+      return false;
+    }
+    g_have_directory_ = true;
+  }
+
+  if (g_new_image_ && (g_current_region_ != R_ERROR))
+    {
+      // Begin image saving
+      try
+      {
+        std::vector<int> compression_params;
+        compression_params.push_back(1);  // JPG quality
+        compression_params.push_back(80);  // TODO(lucbettaieb): make param???
+
+        if (!g_in_saturated_region_)
+        {
+          if (incrementCurrentRegionSnapshotIndex())
+          {
+            cv::imwrite(g_path_ + "/" + g_current_region_ + "/" + std::to_string(getCurrentRegionNSnaphots()) + ".jpg", g_current_image_, compression_params);
+            std::cout << "Wrote new snapshot for region: " << g_current_region_ << std::endl;
+            g_new_image_ = false;
+          }
+          else
+          {
+            ROS_ERROR("Region saturated.  Find new region!");
+          }
+        }
+      }
+      catch (std::runtime_error &e)
+      {
+        ROS_ERROR("OpenCV encountered an error doing imwrite: %s", e.what());
+        return 1;
+      }
+
+
   return true;
 }
 
@@ -54,6 +109,7 @@ bool DataCollector::isRegionVisited(std::string region)
   // Region has not been visited
   return false;
 }
+
 bool DataCollector::isRegionVisitedAndSaturated(std::string region)
 {
   // TODO(enhancement): Make this more runtime efficient
@@ -168,7 +224,7 @@ void DataCollector::amclCB(const geometry_msgs::PoseWithCovarianceStamped &msg)
       g_in_saturated_region_ = false;
     }
     else
-    { 
+    {
       // Region has been visited and does not need to be added to the vector
       g_in_saturated_region_ = false;
     }

@@ -50,7 +50,7 @@ private:
 
   std::vector<StringIntTuple> g_visited_regions_;
 
-  bool g_new_image_, g_in_saturated_region_;
+  bool g_new_image_, g_in_saturated_region_, g_have_directory_;
 
   int g_current_region_index_, g_n_images_required_;
 
@@ -58,7 +58,7 @@ private:
 
   cv::Mat g_current_image_;
 
-  std::string g_path_;
+  std::string g_path_, g_map_name_;
 
   ros::ServiceClient g_region_client_;
 
@@ -73,7 +73,6 @@ private:
   void imgCB(const sensor_msgs::Image &msg);
 
   void amclCB(const geometry_msgs::PoseWithCovarianceStamped &msg);
-
 }
 
 
