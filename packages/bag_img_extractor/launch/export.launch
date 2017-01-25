@@ -1,7 +1,7 @@
 <launch>
-  <node pkg="rosbag" type="play" name="rosbag" args="-d 2 /home/luc/Desktop/bgr_5_class_training_bags/backdesks.bag"/>
+  <node pkg="rosbag" type="play" name="rosbag" args="-d 2 /home/luc/Desktop/32x32_POC_training_bags/serverroom.bag"/>
   <node name="extract" pkg="image_view" type="extract_images" respawn="false" output="screen" cwd="ROS_HOME">
-    <remap from="image" to="/camera/rgb/image_raw"/>
-    <param name="sec_per_frame" value="0.1"/>
+    <remap from="image" to="/camera/rgb/image_raw/downsized"/>
+    <param name="sec_per_frame" value="0.3333333333"/>
   </node>
 </launch>
