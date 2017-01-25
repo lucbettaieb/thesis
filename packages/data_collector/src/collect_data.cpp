@@ -21,7 +21,7 @@ int main(int argc, char** argv)
   nh.param<int>("data_collector/sampling_frequency", sampling_frequency, 5);
   ros::Rate naptime(sampling_frequency);
 
-  while (ros::ok() && collector->collect())
+  while (ros::ok() && collector->collectData())
   {
     ros::spinOnce();
     naptime.sleep();

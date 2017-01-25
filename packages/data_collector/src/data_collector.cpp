@@ -23,21 +23,21 @@ DataCollector::~DataCollector()
   g_new_image_ = false;
 
   // Load up the server client to get the current region
-  g_region_client_ = nh.serviceClient<map_segmentation::GetRegion>("get_region");
+  g_region_client_ = g_nh_.serviceClient<map_segmentation::GetRegion>("get_region");
 
   // Load the number of samples required per region
-  nh.param<int>("data_collector/required_samples", g_n_images_required_, 30);
+  g_nh_.param<int>("data_collector/required_samples", g_n_images_required_, 30);
 
   // Load in the image topic from the parameter server
   std::string image_topic;
-  nh.param<std::string>("data_collector/image_topic", image_topic, "/camera/rgb/image_raw/downsized");
-  ros::Subscriber img_sub = nh.subscribe(image_topic, 1, &DataCollector::imgCB, this);
+  g_nh_.param<std::string>("data_collector/image_topic", image_topic, "/camera/rgb/image_raw/downsized");
+  ros::Subscriber img_sub = g_nh_.subscribe(image_topic, 1, &DataCollector::imgCB, this);
 
   // AMCL Pose is published to a set topic
-  ros::Subscriber amcl_sub = nh.subscribe("/amcl_pose", 1, &DataCollector::amclCB, this);
+  ros::Subscriber amcl_sub = g_nh_.subscribe("/amcl_pose", 1, &DataCollector::amclCB, this);
 
   // Load the map name from the parameter server
-  nh.param<std::string>("data_collector/map_name", g_map_name_, "default_map");
+  g_nh_.param<std::string>("data_collector/map_name", g_map_name_, "default_map");
 
   g_have_directory_ = false;
 }
@@ -47,7 +47,7 @@ bool DataCollector::collectData()
   if (!g_have_directory_)
   {
     // TODO(lucbettaieb): Do string checking to make sure the map name is OK
-    g_path_ = "/tmp/" + map_name;
+    g_path_ = "/tmp/" + g_map_name_;
     boost::filesystem::path dir(g_path_);
 
     if (boost::filesystem::create_directories(dir))
@@ -93,6 +93,7 @@ bool DataCollector::collectData()
 
 
   return true;
+}
 }
 
 bool DataCollector::isRegionVisited(std::string region)
@@ -191,7 +192,7 @@ void DataCollector::amclCB(const geometry_msgs::PoseWithCovarianceStamped &msg)
   map_segmentation::GetRegion srv;
   srv.request.pose = msg.pose.pose;
 
-  if (region_client.call(srv))
+  if (g_region_client_.call(srv))
   {
     if (isRegionVisitedAndSaturated(srv.response.region))
     {

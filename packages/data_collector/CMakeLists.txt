@@ -21,19 +21,36 @@ catkin_package(
 )
 
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
 
+add_library(data_collector src/data_collector.cpp)
+add_dependencies(data_collector ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 # Declare a C++ executable
-add_executable(data_collector src/data_collector.cpp)
+add_executable(old_data_collector src/old_data_collector.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(data_collector ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(old_data_collector ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(data_collector
+target_link_libraries(old_data_collector
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+)
+
+add_executable(collect_data src/collect_data.cpp)
+
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(collect_data ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(collect_data
+  data_collector
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
 )

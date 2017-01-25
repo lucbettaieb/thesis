@@ -22,7 +22,7 @@
 // ROS Messages
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <sensor_msgs/Image.h>
-#include <nav_msgs/Odometry>
+#include <nav_msgs/Odometry.h>
 
 // OpenCV
 #include <opencv2/opencv.hpp>
@@ -73,7 +73,7 @@ private:
   void imgCB(const sensor_msgs::Image &msg);
 
   void amclCB(const geometry_msgs::PoseWithCovarianceStamped &msg);
-}
+};
 
 
 #endif  // DATA_COLLECTOR_DATA_COLLECTOR_H
