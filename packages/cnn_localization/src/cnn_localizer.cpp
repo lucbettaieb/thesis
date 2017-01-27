@@ -26,15 +26,15 @@ CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
   if (!g_nh_.getParam("graph_path", g_graph_path_))
   {
     // TODO(enhancement): Consider searching some common locations for PB files
-    g_graph_path_ = "/home/luc/Desktop/rgb_graph/output_graph.pb";
+    g_graph_path_ = "/home/luc/Desktop/32x32_POC_retrain/output_graph.pb";
   }
   if (!g_nh_.getParam("label_path", g_label_path_))
   {
-    g_label_path_ = "/home/luc/Desktop/rgb_graph/output_labels.txt";
+    g_label_path_ = "/home/luc/Desktop/32x32_POC_retrain/output_labels.pb";
   }
   if (!g_nh_.getParam("image_topic", g_image_topic_))
   {
-    g_image_topic_ = "camera/rgb/image_raw/downsized";
+    g_image_topic_ = "camera/rgb/image_raw";
   }
 
   // Set up image subscriber
@@ -61,8 +61,8 @@ CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
 
   // Default image height and width.
   // This is updated with each new image.
-  g_img_width_ = 128;
-  g_img_height_ = 96;
+  g_img_width_ = 32;
+  g_img_height_ = 32;
 
   g_got_image_ = false;
 }
@@ -152,8 +152,9 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
       }
     }
     auto end = ros::Time::now();
-    std::cerr << "Copy finished in: " << end.toSec() - start.toSec() << std::endl;
 
+    std::cerr << "Copy finished in: " << end.toSec() - start.toSec() << ", H/W/D: " << img_height << " / " << img_width << " / " << img_depth<< std::endl;
+    std::cout << "tensor shape: " << input_image.shape().num_elements() << std::endl;
     // Create a vector of tensors to be populated by running the graph
     std::vector<tensorflow::Tensor> finalOutput;
     std::string InputName = "Mul";  // TODO(lucbetaieb): These seem to be correct but I should make sure
