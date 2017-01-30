@@ -154,7 +154,7 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
     const float* source_data = (float*)(g_most_recent_image_.data);
 
     // Potentially do some normalization operations?  Maybe do this in img_downsize..
-    auto start = ros::Time::now();
+
     // https://gist.github.com/lucbettaieb/66c06f23de7a30b0ca0cccffb2bc732b
     // Populate the input image tensor
     for (int y = 0; y < img_height; ++y)
@@ -171,45 +171,19 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
         }
       }
     }
-    auto end = ros::Time::now();
-    std::cerr << "Copy finished in: " << end.toSec() - start.toSec() << ", H/W/D: " << img_height << " / " << img_width << " / " << img_depth<< std::endl;
-    std::cout << "tensor shape before resizing: " << input_image.shape().num_elements() << std::endl;
+
     // Create a vector of tensors to be populated by running the graph
     std::vector<tensorflow::Tensor> finalOutput;
     std::string InputName = "Mul";  // TODO(lucbetaieb): These seem to be correct but I should make sure
     std::string OutputName = "final_result";
 
     // Run the input_image tensor through the graph and store the output in the output vector
+    auto start = ros::Time::now();
 
-    ////////////////////////////////////////
-
-    // std::vector<tensorflow::Tensor> out_tensors;
-    // NEW NEW NEW NEW NEW HERE
-    // auto root = tensorflow::Scope::NewRootScope();
-
-    // auto resized = tensorflow::ops::ResizeBilinear(root, input_image, tensorflow::ops::Const(root.WithOpName("size"), {299, 299}));
-    // tensorflow::Status chop_status;
-
-    // tensorflow::ops::Div(root.WithOpName("normalized"), tensorflow::ops::Sub(root, resized, {128}), {128}); 
-
-    // tensorflow::GraphDef graph;
-    // chop_status = root.ToGraphDef(&graph);
-    // checkStatus(chop_status);
-
-    // std::unique_ptr<tensorflow::Session> session(tensorflow::NewSession(tensorflow::SessionOptions()));
-    // chop_status = (session->Create(graph));
-    // checkStatus(chop_status);
-    // chop_status = (session->Run({}, {"normalized"}, {}, &out_tensors));
-    // checkStatus(chop_status);
-
-    ////////////////////////////////////////
-
-    std::cout << "tensor shape after resizing: " << input_image.shape().num_elements() << std::endl;
-
-    start = ros::Time::now();
     tensorflow::Status run_status = g_tf_session_ptr_->Run({{InputName, input_image}}, {OutputName}, {}, &finalOutput);
-    //tensorflow::Status run_status = g_tf_session_ptr_->Run
-    end = ros::Time::now();
+
+    auto end = ros::Time::now();
+    
     std::cerr << "Run finished in: " << end.toSec() - start.toSec() << std::endl;
 
     checkStatus(run_status);
@@ -230,19 +204,16 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
     {
       std::getline(label, line);
       sorted.emplace_back(scores(i), line);
-      // std::cout << scores(i) << " / line=" << line << std::endl;
     }
 
     std::sort(sorted.begin(), sorted.end());
     std::reverse(sorted.begin(), sorted.end());
 
-    // std::cout << "size of the sorted file is " << sorted.size() << std::endl;
-
-    // for (uint i = 0; i < 5; ++i)
-    // {
-    //   std::cout << "The output of the current graph has category  " << sorted[i].second
-    //             << " with probability " << sorted[i].first << std::endl;
-    // }
+    for (uint i = 0; i < 5; ++i)
+    {
+      std::cout << "OUTPUT: " << sorted[i].second
+                << "| SCORE: " << sorted[i].first << std::endl;
+    }
 
     // Set result to the "best" outcome!
     std::get<0>(result) = sorted[0].second;
@@ -261,13 +232,13 @@ void CNNLocalizer::imageCB(const sensor_msgs::ImageConstPtr &msg)
   try
   {
     // SEGFAULTINESS HERE!!!
-    cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
+    cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
 
     cv::Mat image_in = cv_ptr->image.clone();
 
     cv::Mat image_out;
     cv::Size size(299, 299);
-    cv::resize(image_in, image_out, size, 0, 0, CV_INTER_LINEAR);
+    cv::resize(image_in, image_out, size, 0, 0, CV_INTER_NN);
 
     image_out.convertTo(g_most_recent_image_, CV_32FC3);
 
