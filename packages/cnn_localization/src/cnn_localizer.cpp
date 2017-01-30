@@ -16,6 +16,31 @@
 // CNN Localizer
 #include <cnn_localization/cnn_localizer.h>
 
+#include <opencv2/highgui/highgui.hpp>
+
+#include "tensorflow/cc/ops/const_op.h"
+#include "tensorflow/cc/ops/image_ops.h"
+#include "tensorflow/cc/ops/standard_ops.h"
+#include "tensorflow/core/framework/graph.pb.h"
+#include "tensorflow/core/framework/tensor.h"
+#include "tensorflow/core/graph/default_device.h"
+#include "tensorflow/core/graph/graph_def_builder.h"
+#include "tensorflow/core/lib/core/errors.h"
+#include "tensorflow/core/lib/core/stringpiece.h"
+#include "tensorflow/core/lib/core/threadpool.h"
+#include "tensorflow/core/lib/io/path.h"
+#include "tensorflow/core/lib/strings/stringprintf.h"
+#include "tensorflow/core/platform/init_main.h"
+#include "tensorflow/core/platform/logging.h"
+#include "tensorflow/core/platform/types.h"
+#include "tensorflow/core/public/session.h"
+#include "tensorflow/core/util/command_line_flags.h"
+
+tensorflow::Status ConvertFromOpenCVToRunnableTensor()
+{
+
+}
+
 CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
 {
   // Gimme dat node handle
@@ -30,11 +55,11 @@ CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
   }
   if (!g_nh_.getParam("label_path", g_label_path_))
   {
-    g_label_path_ = "/home/luc/Desktop/32x32_POC_retrain/output_labels.pb";
+    g_label_path_ = "/home/luc/Desktop/32x32_POC_retrain/output_labels.txt";
   }
   if (!g_nh_.getParam("image_topic", g_image_topic_))
   {
-    g_image_topic_ = "camera/rgb/image_raw";
+    g_image_topic_ = "camera/rgb/image_raw/downsized";
   }
 
   // Set up image subscriber
@@ -61,7 +86,7 @@ CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
 
   // Default image height and width.
   // This is updated with each new image.
-  g_img_width_ = 32;
+  g_img_width_ = 42;
   g_img_height_ = 32;
 
   g_got_image_ = false;
@@ -106,6 +131,7 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
   // If there is an image..
   if (g_got_image_)
   {
+
     // create a tensorflow::Tensor with the image information
 
     int img_depth = 3;// = g_most_recent_image_.channels();
@@ -124,19 +150,13 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
     // Pull the Tensor out of the object to put data inside it
     auto input_image_mapped = input_image.tensor<float, 4>();
 
-    // TEST TEST TEST TEST TEST
-    // Lock the mutex
-    g_mutex_.lock();
-
     // Grab a constant pointer to an integer stream of the image data
     const float* source_data = (float*)(g_most_recent_image_.data);
 
     // Potentially do some normalization operations?  Maybe do this in img_downsize..
-
+    auto start = ros::Time::now();
     // https://gist.github.com/lucbettaieb/66c06f23de7a30b0ca0cccffb2bc732b
     // Populate the input image tensor
-
-    auto start = ros::Time::now();
     for (int y = 0; y < img_height; ++y)
     {
       const float* source_row = source_data + (y * img_width * img_depth);
@@ -152,25 +172,45 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
       }
     }
     auto end = ros::Time::now();
-
     std::cerr << "Copy finished in: " << end.toSec() - start.toSec() << ", H/W/D: " << img_height << " / " << img_width << " / " << img_depth<< std::endl;
-    std::cout << "tensor shape: " << input_image.shape().num_elements() << std::endl;
+    std::cout << "tensor shape before resizing: " << input_image.shape().num_elements() << std::endl;
     // Create a vector of tensors to be populated by running the graph
     std::vector<tensorflow::Tensor> finalOutput;
     std::string InputName = "Mul";  // TODO(lucbetaieb): These seem to be correct but I should make sure
-    std::string OutputName = "pool_3";
+    std::string OutputName = "final_result";
 
     // Run the input_image tensor through the graph and store the output in the output vector
+
+    ////////////////////////////////////////
+
+    // std::vector<tensorflow::Tensor> out_tensors;
+    // NEW NEW NEW NEW NEW HERE
+    // auto root = tensorflow::Scope::NewRootScope();
+
+    // auto resized = tensorflow::ops::ResizeBilinear(root, input_image, tensorflow::ops::Const(root.WithOpName("size"), {299, 299}));
+    // tensorflow::Status chop_status;
+
+    // tensorflow::ops::Div(root.WithOpName("normalized"), tensorflow::ops::Sub(root, resized, {128}), {128}); 
+
+    // tensorflow::GraphDef graph;
+    // chop_status = root.ToGraphDef(&graph);
+    // checkStatus(chop_status);
+
+    // std::unique_ptr<tensorflow::Session> session(tensorflow::NewSession(tensorflow::SessionOptions()));
+    // chop_status = (session->Create(graph));
+    // checkStatus(chop_status);
+    // chop_status = (session->Run({}, {"normalized"}, {}, &out_tensors));
+    // checkStatus(chop_status);
+
+    ////////////////////////////////////////
+
+    std::cout << "tensor shape after resizing: " << input_image.shape().num_elements() << std::endl;
 
     start = ros::Time::now();
     tensorflow::Status run_status = g_tf_session_ptr_->Run({{InputName, input_image}}, {OutputName}, {}, &finalOutput);
     //tensorflow::Status run_status = g_tf_session_ptr_->Run
     end = ros::Time::now();
     std::cerr << "Run finished in: " << end.toSec() - start.toSec() << std::endl;
-
-    // TEST TEST TEST TEST TEST
-    // unlock the mutex
-    g_mutex_.unlock();
 
     checkStatus(run_status);
 
@@ -186,7 +226,7 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
     std::ifstream label(g_label_path_);
     std::string line;
 
-    for (uint i = 0; i <= 5; ++i)
+    for (uint i = 0; i <= 4; ++i)
     {
       std::getline(label, line);
       sorted.emplace_back(scores(i), line);
@@ -223,12 +263,19 @@ void CNNLocalizer::imageCB(const sensor_msgs::ImageConstPtr &msg)
     // SEGFAULTINESS HERE!!!
     cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
 
-    cv::Mat image = cv_ptr->image.clone();
+    cv::Mat image_in = cv_ptr->image.clone();
 
-    image.convertTo(g_most_recent_image_, CV_32FC3);
+    cv::Mat image_out;
+    cv::Size size(299, 299);
+    cv::resize(image_in, image_out, size, 0, 0, CV_INTER_LINEAR);
 
-    g_img_height_ = msg->height;
-    g_img_width_ = msg->width;
+    image_out.convertTo(g_most_recent_image_, CV_32FC3);
+
+    cv::imshow("upsampled", image_out);
+    cv::waitKey(1);
+    // cv::destroyWindow("upsampled");
+    g_img_height_ = 299;  // msg->height;
+    g_img_width_ = 299;  // msg->width;
 
     g_got_image_ = true;
   }
