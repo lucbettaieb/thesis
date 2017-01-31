@@ -54,7 +54,7 @@ public:
    * @param graph_path the absolute path to the .pb tensorflow graph
    * @param label_path the absolute path to the .txt tensorflow labels
    */
-  CNNLocalizer(ros::NodeHandle &nh, std::string graph_path, std::string label_path);
+  // CNNLocalizer(ros::NodeHandle &nh, std::string graph_path, std::string label_path);
 
   /*
    * @brief Destructor for the CNNLocalizer
@@ -72,7 +72,7 @@ private:
    * @brief The global NodeHandle for use by the CNNLocalizer
    */
   ros::NodeHandle g_nh_;
-  
+
   /*
    * @brief The global subscriber to get the most recent image
    */
@@ -87,7 +87,7 @@ private:
    * @brief The path to the TensorFlow graph that is to be loaded
    */
   std::string g_graph_path_;
-  
+
   /*
    * @brief The path to the TensorFlow label file to be loaded
    */
@@ -106,7 +106,7 @@ private:
   /*
    * @brief Height and width of the incoming images
    */
-  int g_img_height_, g_img_width_;
+  int g_upsampled_image_height_, g_upsampled_image_width_;
 
   /*
    * @brief The tensorflow session ptr that is going to be loaded

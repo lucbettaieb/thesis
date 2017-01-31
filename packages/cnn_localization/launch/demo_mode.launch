@@ -1,0 +1,6 @@
+<launch>
+  <!-- Demo mode -->
+  <node name="demo_mode" pkg="cnn_localization" type="demo_mode" output="screen">
+    <rosparam command="load" file="$(find cnn_localization)/config/config.yaml" />
+  </node>
+</launch>
