@@ -56,12 +56,12 @@ CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
     g_image_topic_ = "camera/rgb/image_raw/downsized";
   }
 
-  if (!g_nh_.getParam("upsampled_height"), g_upsampled_image_height_)
+  if (!g_nh_.getParam("upsampled_height", g_upsampled_image_height_))
   {
     g_upsampled_image_height_ = 299;
   }
 
-  if (!g_nh_.getParam("upsampled_width"), g_upsampled_image_width_)
+  if (!g_nh_.getParam("upsampled_width", g_upsampled_image_width_))
   {
     g_upsampled_image_width_ = 299;
   }
@@ -210,8 +210,6 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
 
 void CNNLocalizer::imageCB(const sensor_msgs::ImageConstPtr &msg)
 {
-  g_mutex_.lock();
-
   cv_bridge::CvImagePtr cv_ptr;
 
   try
@@ -229,6 +227,7 @@ void CNNLocalizer::imageCB(const sensor_msgs::ImageConstPtr &msg)
 
     // Consider subtracting the mean and dividing by the scale?
     // This is what is done in label_image.cc
+
     // cv::Mat image_mean, image_std;
     // cv::meanStdDev(image_out, image_mean, image_std);
     // cv::subtract(image_out, image_mean, image_out);
@@ -244,6 +243,4 @@ void CNNLocalizer::imageCB(const sensor_msgs::ImageConstPtr &msg)
     ROS_ERROR("Failed converting the received message: %s", e.what());
     return;
   }
-
-  g_mutex_.unlock();
 }

@@ -133,8 +133,6 @@ private:
    * @brief The image callback for the image subscriber
    */
   void imageCB(const sensor_msgs::ImageConstPtr &msg);
-
-  boost::mutex g_mutex_;
 };
 
 #endif  // CNN_LOCALIZATION_CNN_LOCALIZER_H

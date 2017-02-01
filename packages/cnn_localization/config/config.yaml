@@ -1,4 +1,4 @@
-graph_path: /home/luc/Desktop/32x32_POC_retrain/output_graph.pb
-label_path: /home/luc/Desktop/32x32_POC_retrain/output_labels.txt
+graph_path: /home/luc/Desktop/32x32_POC_retrain_full/output_graph.pb
+label_path: /home/luc/Desktop/32x32_POC_retrain_full/output_labels.txt
 
 image_topic: /camera/rgb/image_raw/downsized
