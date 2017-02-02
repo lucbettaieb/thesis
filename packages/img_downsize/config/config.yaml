@@ -1,4 +1,11 @@
 # Settings for img_downsize
 
 image_topic: /camera/rgb/image_raw
+
+use_scale: false
 scale: 4
+
+downsized_width: 400
+downsized_height: 400
+
+sampling_frequency: 3
