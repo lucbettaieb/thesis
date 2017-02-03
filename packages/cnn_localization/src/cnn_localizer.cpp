@@ -41,27 +41,28 @@ CNNLocalizer::CNNLocalizer(ros::NodeHandle &nh)
   g_nh_ = nh;
 
   // Load parameters
-  if (!g_nh_.getParam("graph_path", g_graph_path_))
+  if (!g_nh_.getParam("demo_mode/graph_path", g_graph_path_))
   {
+    ROS_ERROR("USING DEFAULT GRAPH");
     g_graph_path_ = "/home/luc/Desktop/32x32_POC_retrain/output_graph.pb";
   }
 
-  if (!g_nh_.getParam("label_path", g_label_path_))
+  if (!g_nh_.getParam("demo_mode/label_path", g_label_path_))
   {
     g_label_path_ = "/home/luc/Desktop/32x32_POC_retrain/output_labels.txt";
   }
 
-  if (!g_nh_.getParam("image_topic", g_image_topic_))
+  if (!g_nh_.getParam("demo_mode/image_topic", g_image_topic_))
   {
     g_image_topic_ = "camera/rgb/image_raw/downsized";
   }
 
-  if (!g_nh_.getParam("upsampled_height", g_upsampled_image_height_))
+  if (!g_nh_.getParam("demo_mode/upsampled_height", g_upsampled_image_height_))
   {
     g_upsampled_image_height_ = 299;
   }
 
-  if (!g_nh_.getParam("upsampled_width", g_upsampled_image_width_))
+  if (!g_nh_.getParam("demo_mode/upsampled_width", g_upsampled_image_width_))
   {
     g_upsampled_image_width_ = 299;
   }
@@ -184,7 +185,7 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
     std::ifstream label(g_label_path_);
     std::string line;
 
-    for (uint i = 0; i <= 4; ++i)
+    for (uint i = 0; i <= 3; ++i)
     {
       std::getline(label, line);
       sorted.emplace_back(scores(i), line);
@@ -194,7 +195,7 @@ std::tuple<std::string, double> CNNLocalizer::runImage()
     std::reverse(sorted.begin(), sorted.end());
 
     // Print the results
-    for (uint i = 0; i < 5; ++i)
+    for (uint i = 0; i < 4; ++i)
     {
       std::cout << "OUTPUT: " << sorted[i].second
                 << "| SCORE: " << sorted[i].first << std::endl;

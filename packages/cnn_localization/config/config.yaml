@@ -1,4 +1,6 @@
-graph_path: /home/luc/Desktop/32x32_POC_retrain_full/output_graph.pb
-label_path: /home/luc/Desktop/32x32_POC_retrain_full/output_labels.txt
+graph_path: /home/luc/Desktop/POC_DATASET/4_class_rgb_retrain_graphs/400x400_set_1_retrain/output_graph.pb
+label_path: /home/luc/Desktop/POC_DATASET/4_class_rgb_retrain_graphs/400x400_set_1_retrain/output_labels.txt
 
 image_topic: /camera/rgb/image_raw/downsized
+upsampled_height: 299
+upsampled_width: 299
