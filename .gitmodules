@@ -1,0 +1,3 @@
+[submodule "packages/ros_caffe"]
+	path = packages/ros_caffe
+	url = https://github.com/tzutalin/ros_caffe.git
