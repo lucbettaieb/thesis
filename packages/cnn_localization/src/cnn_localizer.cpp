@@ -234,8 +234,8 @@ void CNNLocalizer::imageCB(const sensor_msgs::ImageConstPtr &msg)
     // cv::subtract(image_out, image_mean, image_out);
     // cv::divide(image_out, image_std, image_out);
 
-    cv::imshow("upsampled", image_out);
-    cv::waitKey(1);
+    // cv::imshow("upsampled", image_out);
+    // cv::waitKey(1);
 
     g_got_image_ = true;
   }

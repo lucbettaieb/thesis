@@ -47,3 +47,5 @@ qtcreator-*
 CATKIN_IGNORE
 *.bag
 *.p
+
+*.caffemodel

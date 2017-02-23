@@ -1,6 +1,6 @@
 ### Packages
 
-may need to do this:
+may need to do this to get caffe to compile properly after checking out recursively:
 ```
 # In the directory you installed Caffe to
 protoc src/caffe/proto/caffe.proto --cpp_out=.
