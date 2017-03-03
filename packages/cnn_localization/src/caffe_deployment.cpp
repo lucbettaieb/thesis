@@ -14,18 +14,15 @@
 const std::string IMG_TOPIC = "camera/rgb/image_raw/downsized";
 const std::string PUB_TOPIC = "/caffe_ret";
 
-Classifier* classifier;
-std::string model_path;
-std::string weights_path;
-std::string mean_file;
-std::string label_file;
-std::string image_path;
+std::shared_ptr<Classifier> classifier;
+std::string g_model_path_, g_weights_path_, g_mean_file_, g_label_file_, g_image_topic_, g_pub_topic;
 
 ros::Publisher g_pub_;
 
 void publishRet(const std::vector<Prediction>& predictions);
 
-void imageCallback(const sensor_msgs::ImageConstPtr& msg) {
+void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+{
   try 
   {
     cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg, "bgr8");
@@ -41,16 +38,14 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg) {
   }
 }
 
-
-// TODO: Define a msg or create a service
-// Try to receive : $rostopic echo /caffe_ret
 void publishRet(const std::vector<Prediction>& predictions)
 {
   std_msgs::String msg;
   std::stringstream ss;
-  for (size_t i = 0; i < predictions.size(); ++i) {
-      Prediction p = predictions[i];
-      ss << "[" << p.second << " - " << p.first << "]" << std::endl;
+  for (size_t i = 0; i < predictions.size(); ++i)
+  {
+    Prediction p = predictions[i];
+    ss << "[" << p.second << " - " << p.first << "]" << std::endl;
   }
   msg.data = ss.str();
   g_pub_.publish(msg);
@@ -60,25 +55,41 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "caffe_deployment");
   ros::NodeHandle nh;
+
+  if (!g_nh_.getParam("caffe_deployment/image_topic", g_image_topic_))
+  {
+    g_image_topic_ = "/camera/rgb/image_raw/downsized";
+  }
+  if (!g_nh_.getParam("caffe_deployment/pub_topic", g_pub_topic_))
+  {
+    g_image_topic_ = "/caffe_ret";
+  }
+  if (!g_nh_.getParam("caffe_deployment/model_path", g_pub_topic_))
+  {
+    g_model_path_ = "/home/luc/Desktop/deploy.prototxt";
+  }
+  if (!g_nh_.getParam("caffe_deployment/weights_path", g_pub_topic_))
+  {
+    g_weights_path_ = "/home/luc/Desktop/model.caffemodel";
+  }
+  if (!g_nh_.getParam("caffe_deployment/mean_path", g_pub_topic_))
+  {
+    g_mean_file_ = "/home/luc/Desktop/mean.binaryproto";
+  }
+  if (!g_nh_.getParam("caffe_deployment/label_path", g_pub_topic_))
+  {
+    g_label_file_ = "/home/luc/Desktop/labels.txt";
+  }
+
   image_transport::ImageTransport it(nh);
 
+  image_transport::Subscriber sub = it.subscribe(g_image_topic_, 1, imageCallback);
+  g_pub_ = nh.advertise<std_msgs::String>(g_image_topic_, 100);
 
-  image_transport::Subscriber sub = it.subscribe(IMG_TOPIC, 1, imageCallback);
-
-  g_pub_ = nh.advertise<std_msgs::String>(PUB_TOPIC, 100);
-
-  const std::string ROOT_SAMPLE = ros::package::getPath("ros_caffe");
-  model_path = ROOT_SAMPLE + "/data/deploy.prototxt";
-  weights_path = ROOT_SAMPLE + "/data/bvlc_reference_caffenet.caffemodel";
-  mean_file = ROOT_SAMPLE + "/data/imagenet_mean.binaryproto";
-  label_file = ROOT_SAMPLE + "/data/synset_words.txt";
-  image_path = ROOT_SAMPLE + "/data/cat.jpg";
-
-  classifier = new Classifier(model_path, weights_path, mean_file, label_file);
+  classifier.reset(Classifier(g_model_path_, g_weights_path_, g_mean_file_, g_label_file_));
 
   ros::spin();
 
-  delete classifier;
   ros::shutdown();
   return 0;
 }

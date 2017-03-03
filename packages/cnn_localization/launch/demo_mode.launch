@@ -1,6 +1,6 @@
 <launch>
   <!-- Demo mode -->
-  <node name="demo_mode" pkg="cnn_localization" type="demo_mode" output="screen">
-    <rosparam command="load" file="$(find cnn_localization)/config/config.yaml" />
+  <node name="caffe_deployment" pkg="cnn_localization" type="caffe_deployment" output="screen">
+    <rosparam command="load" file="$(find cnn_localization)/config/demo_config.yaml" />
   </node>
 </launch>

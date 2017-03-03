@@ -1,0 +1,6 @@
+<launch>
+  <!-- caffe deployment mode -->
+  <node name="demo_mode" pkg="cnn_localization" type="demo_mode" output="screen">
+    <rosparam command="load" file="$(find cnn_localization)/config/caffe_config.yaml" />
+  </node>
+</launch>
