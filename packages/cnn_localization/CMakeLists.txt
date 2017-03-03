@@ -99,3 +99,11 @@ target_link_libraries(demo_mode
   ${TensorFlow_LIBRARY}
   cnn_localizer
 )
+
+add_executable(caffe_deployment src/caffe_deployment.cpp)
+
+add_dependencies(caffe_deployment ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(caffe_deployment
+  ${catkin_LIBRARIES}
+)

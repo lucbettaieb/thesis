@@ -5,3 +5,5 @@ label_path: /home/luc/Desktop/labels.txt
 
 image_topic: /camera/rgb/image_raw/downsized
 pub_topic: /caffe_ret
+
+n_multi_hypothesis: 4
