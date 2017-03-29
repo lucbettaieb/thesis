@@ -1,5 +1,6 @@
 <launch>
-  <node pkg="rosbag" type="play" name="rosbag" args="-d 2 /home/luc/Downloads/400x400_POC/400x400_POC/circuitslab_2017-02-01-14-04-42.bag"/>
+  <node pkg="rosbag" type="play" name="rosbag" args="-d 2 /home/luc/Desktop/test7class_2017-03-06-15-42-40.bag
+"/>
   <node name="extract" pkg="image_view" type="extract_images" respawn="false" output="screen" cwd="ROS_HOME">
     <remap from="image" to="/camera/rgb/image_raw/downsized"/>
     <param name="sec_per_frame" value="0.25"/>
