@@ -26,17 +26,17 @@ class CaffeROS
 public:
   CaffeROS();
 
-  CaffeROS(const string& model_file,
-           const string& trained_file,
-           const string& mean_file,
-           const string& label_file);
+  CaffeROS(const std::string& model_file,
+           const std::string& trained_file,
+           const std::string& mean_file,
+           const std::string& label_file);
 
   ~CaffeROS();
 
   std::vector<Prediction> classify(const cv::Mat &img, int N = 5);
 
 private:
-  std::vector<float> Predict(const cv::Matt &img);
+  std::vector<float> Predict(const cv::Mat &img);
   
   void SetMean(const std::string &mean_file);
   void WrapInputLayer(std::vector<cv::Mat>* input_channels);
@@ -47,6 +47,6 @@ private:
   int num_channels_;
   cv::Mat mean_;
   std::vector<std::string> labels_;
-}
+};
 
 #endif  // CNN_LOCALIZATION_CAFFE_ROS_H

@@ -1,0 +1,3 @@
+[submodule "packages/cnn_localization/caffe"]
+	path = packages/cnn_localization/caffe
+	url = https://github.com/BVLC/caffe.git

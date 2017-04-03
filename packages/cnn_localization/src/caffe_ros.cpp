@@ -27,21 +27,21 @@ static std::vector<int> Argmax(const std::vector<float>& v, int N) {
     return result;
 }
 
-CaffeROS::CaffeROS(const string& model_file,
-                       const string& trained_file,
-                       const string& mean_file,
-                       const string& label_file)
+CaffeROS::CaffeROS(const std::string& model_file,
+                   const std::string& trained_file,
+                   const std::string& mean_file,
+                   const std::string& label_file)
 {
 #ifdef CPU_ONLY
-  Caffe::set_mode(Caffe::CPU);
+  caffe::Caffe::set_mode(caffe::Caffe::CPU);
 #else
-  Caffe::set_mode(Caffe::GPU);
+  caffe::Caffe::set_mode(caffe::Caffe::GPU);
 #endif
   /* Load the network. */
 
   net_.reset(new caffe::Net<float>(model_file, caffe::TEST));
 
-  net_->caffe::CopyTrainedLayersFrom(trained_file);
+  net_->CopyTrainedLayersFrom(trained_file);
 
   caffe::Blob<float>* input_layer = net_->input_blobs()[0];
   num_channels_ = input_layer->channels();
@@ -53,17 +53,17 @@ CaffeROS::CaffeROS(const string& model_file,
 
   /* Load labels. */
   std::ifstream labels(label_file.c_str());
-  string line;
+  std::string line;
 
   while (std::getline(labels, line))
   {
-    labels_.push_back(string(line));
+    labels_.push_back(std::string(line));
   }
 
   caffe::Blob<float>* output_layer = net_->output_blobs()[0];
 }
 
-std::vector<Prediction> CaffeROS::Classify(const cv::Mat& img, int N)
+std::vector<Prediction> CaffeROS::classify(const cv::Mat& img, int N)
 {
   std::vector<float> output = Predict(img);
 
@@ -78,7 +78,7 @@ std::vector<Prediction> CaffeROS::Classify(const cv::Mat& img, int N)
   return predictions;
 }
 
-void CaffeROS::SetMean(const string& mean_file)
+void CaffeROS::SetMean(const std::string& mean_file)
 {
   caffe::BlobProto blob_proto;
   caffe::ReadProtoFromBinaryFileOrDie(mean_file.c_str(), &blob_proto);
@@ -111,7 +111,7 @@ void CaffeROS::SetMean(const string& mean_file)
 
 std::vector<float> CaffeROS::Predict(const cv::Mat& img)
 {
-  cafe::Blob<float>* input_layer = net_->input_blobs()[0];
+  caffe::Blob<float>* input_layer = net_->input_blobs()[0];
   input_layer->Reshape(1, num_channels_,
                        input_geometry_.height, input_geometry_.width);
   /* Forward dimension change to all layers. */
@@ -125,7 +125,7 @@ std::vector<float> CaffeROS::Predict(const cv::Mat& img)
   net_->ForwardPrefilled();
 
   /* Copy the output layer to a std::vector */
-  Blob<float>* output_layer = net_->output_blobs()[0];
+  caffe::Blob<float>* output_layer = net_->output_blobs()[0];
   const float* begin = output_layer->cpu_data();
   const float* end = begin + output_layer->channels();
   return std::vector<float>(begin, end);
