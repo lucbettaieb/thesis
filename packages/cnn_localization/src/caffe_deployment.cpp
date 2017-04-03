@@ -13,11 +13,13 @@
 #include <vector>
 #include <algorithm>
 
-#include <ros_caffe/Classifier.h>
+#include <std_msgs/String.h>
 
-std::shared_ptr<Classifier> g_classifier_;
+#include <cnn_localization/caffe_ros.h>
+
+std::shared_ptr<CaffeROS> g_classifier_;
 std::string g_model_path_, g_weights_path_, g_mean_file_, g_label_file_, g_image_topic_, g_pub_topic_;
-uint g_n_multi_hypothesis_;
+int g_n_multi_hypothesis_;
 
 ros::Publisher g_pub_;
 
@@ -40,7 +42,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 
     // cv::imwrite("rgb.png", cv_ptr->image);
     cv::Mat img = cv_ptr->image;
-    std::vector<Prediction> predictions = g_classifier_->Classify(img);
+    std::vector<Prediction> predictions = g_classifier_->classify(img);
     // publishRet(predictions);
 
     std::sort(predictions.begin(), predictions.end());
@@ -56,7 +58,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
     {
       for (uint i = 0; i < predictions.size(); i++)
       {
-        g_sum_predictions_[i].second() += predictions[i].second();
+        g_sum_predictions_[i].second += predictions[i].second;
       }
     }
 
@@ -91,7 +93,7 @@ void publishMultiHypothesis(std::vector<Prediction> predictions)
 {
   std::sort(predictions.begin(), predictions.end(), sortByScore);
   std_msgs::String msg;
-  msg.data = "CONSENSUS" + predictions.[i].first;
+  msg.data = "CONSENSUS" + predictions[0].first;
   g_pub_.publish(msg);
 }
 
@@ -103,31 +105,31 @@ int main(int argc, char **argv)
   g_i_prediction_ = 0;
 
   // Get parameters from the parameter server
-  if (!g_nh_.getParam("caffe_deployment/image_topic", g_image_topic_))
+  if (!nh.getParam("caffe_deployment/image_topic", g_image_topic_))
   {
     g_image_topic_ = "/camera/rgb/image_raw/downsized";
   }
-  if (!g_nh_.getParam("caffe_deployment/pub_topic", g_pub_topic_))
+  if (!nh.getParam("caffe_deployment/pub_topic", g_pub_topic_))
   {
     g_pub_topic_ = "/caffe_ret";
   }
-  if (!g_nh_.getParam("caffe_deployment/model_path", g_model_path_))
+  if (!nh.getParam("caffe_deployment/model_path", g_model_path_))
   {
     g_model_path_ = "/home/luc/Desktop/deploy.prototxt";
   }
-  if (!g_nh_.getParam("caffe_deployment/weights_path", g_weights_path_))
+  if (!nh.getParam("caffe_deployment/weights_path", g_weights_path_))
   {
     g_weights_path_ = "/home/luc/Desktop/model.caffemodel";
   }
-  if (!g_nh_.getParam("caffe_deployment/mean_path", g_mean_file_))
+  if (!nh.getParam("caffe_deployment/mean_path", g_mean_file_))
   {
     g_mean_file_ = "/home/luc/Desktop/mean.binaryproto";
   }
-  if (!g_nh_.getParam("caffe_deployment/label_path", g_label_file_))
+  if (!nh.getParam("caffe_deployment/label_path", g_label_file_))
   {
     g_label_file_ = "/home/luc/Desktop/labels.txt";
   }
-  if (!g_nh_.getParam("caffe_deployment/g_n_multi_hypothesis_"), g_n_multi_hypothesis_)
+  if (!nh.getParam("caffe_deployment/g_n_multi_hypothesis_", g_n_multi_hypothesis_))
   {
     g_n_multi_hypothesis_ = 4;
   }
@@ -137,7 +139,7 @@ int main(int argc, char **argv)
   image_transport::Subscriber sub = it.subscribe(g_image_topic_, 1, imageCallback);
   g_pub_ = nh.advertise<std_msgs::String>(g_image_topic_, 100);
 
-  g_classifier_.reset(Classifier(g_model_path_, g_weights_path_, g_mean_file_, g_label_file_));
+  g_classifier_.reset(new CaffeROS(g_model_path_, g_weights_path_, g_mean_file_, g_label_file_));
 
   ros::spin();
 

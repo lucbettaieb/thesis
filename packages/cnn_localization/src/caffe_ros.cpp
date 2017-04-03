@@ -63,6 +63,10 @@ CaffeROS::CaffeROS(const std::string& model_file,
   caffe::Blob<float>* output_layer = net_->output_blobs()[0];
 }
 
+CaffeROS::~CaffeROS()
+{
+}
+
 std::vector<Prediction> CaffeROS::classify(const cv::Mat& img, int N)
 {
   std::vector<float> output = Predict(img);

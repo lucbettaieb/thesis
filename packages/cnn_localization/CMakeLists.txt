@@ -106,10 +106,11 @@ target_link_libraries(caffe_ros
 #   cnn_localizer
 # )
 
-# add_executable(caffe_deployment src/caffe_deployment.cpp)
+add_executable(caffe_deployment src/caffe_deployment.cpp)
 
-# add_dependencies(caffe_deployment ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(caffe_deployment ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-# target_link_libraries(caffe_deployment
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(caffe_deployment
+  caffe_ros
+  ${catkin_LIBRARIES}
+)
