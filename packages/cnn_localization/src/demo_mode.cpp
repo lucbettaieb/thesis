@@ -9,7 +9,7 @@
 #include <tuple>
 
 #include <ros/ros.h>
-#include <cnn_localization/cnn_localizer.h>
+#include <cnn_localization/tensorflow_ros.h>
 
 int main(int argc, char** argv)
 {

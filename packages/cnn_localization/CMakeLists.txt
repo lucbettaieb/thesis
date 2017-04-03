@@ -15,6 +15,9 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
 )
 
+set(Caffe_INCLUDE_DIRS caffe/include caffe/distribute/include)
+set(CAFFE_LINK_LIBRARY caffe/build/lib)
+
 find_package(TensorFlow REQUIRED)
 find_package(Eigen REQUIRED)
 find_package(Protobuf REQUIRED)
@@ -69,36 +72,39 @@ include_directories(
   ${Protobuf_INCLUDE_DIRS}
   ${TensorFlow_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
+  ${Caffe_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-add_library(cnn_localizer
-  		    	src/cnn_localizer.cpp
-)
+# add_library(tensorflow_ros
+#   		    	src/tensorflow_ros.cpp
+# )
+# add_dependencies(tensorflow_ros cv_bridge ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(tensorflow_ros
+#   ${catkin_LIBRARIES}
+#   ${Protobuf_LIBRARIES}
+#   ${TensorFlow_LIBRARY}
+# )
 
-add_dependencies(cnn_localizer cv_bridge ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-target_link_libraries(cnn_localizer
+link_directories(${CAFFE_LINK_LIBRARY})
+add_library(caffe_ros src/caffe_ros.cpp)
+add_dependencies(caffe_ros ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(caffe_ros
   ${catkin_LIBRARIES}
   ${Protobuf_LIBRARIES}
   ${TensorFlow_LIBRARY}
+  caffe
 )
-
 
 ## Declare a C++ executable
-add_executable(demo_mode src/demo_mode.cpp)
-
-## Add cmake target dependencies of the executable
-## same as for the library above
-add_dependencies(demo_mode cnn_localizer ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-## Specify libraries to link a library or executable target against
-target_link_libraries(demo_mode
-  ${catkin_LIBRARIES}
-  ${Protobuf_LIBRARIES}
-  ${TensorFlow_LIBRARY}
-  cnn_localizer
-)
+# add_executable(demo_mode src/demo_mode.cpp)
+# add_dependencies(demo_mode cnn_localizer ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(demo_mode
+#   ${catkin_LIBRARIES}
+#   ${Protobuf_LIBRARIES}
+#   ${TensorFlow_LIBRARY}
+#   cnn_localizer
+# )
 
 # add_executable(caffe_deployment src/caffe_deployment.cpp)
 
