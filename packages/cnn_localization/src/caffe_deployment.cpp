@@ -21,14 +21,14 @@ std::shared_ptr<CaffeROS> g_classifier_;
 std::string g_model_path_, g_weights_path_, g_mean_file_, g_label_file_, g_image_topic_, g_pub_topic_;
 int g_n_multi_hypothesis_;
 
-ros::Publisher g_pub_;
+ros::Publisher g_pub_, g_verbose_pub_, g_all_pub_;
 
 std::vector<Prediction> g_sum_predictions_;
 uint g_i_prediction_;
 
 bool sortByScore(const Prediction &a, const Prediction &b)
 {
-  return a.second < b.second;
+  return a.second > b.second;
 }
 
 void publishRet(const std::vector<Prediction>& predictions);
@@ -47,6 +47,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 
     std::sort(predictions.begin(), predictions.end());
 
+    publishRet(predictions);
     // If the counter is zero, clear the previous predicitons and initialize
     if (g_i_prediction_ == 0)
     {
@@ -61,6 +62,8 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
         g_sum_predictions_[i].second += predictions[i].second;
       }
     }
+    
+    g_i_prediction_++;
 
     if (g_i_prediction_ >= g_n_multi_hypothesis_)
     {
@@ -68,7 +71,6 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
      g_i_prediction_ = 0;
     }
 
-    g_i_prediction_++;
   }
   catch (cv_bridge::Exception& e)
   {
@@ -86,14 +88,18 @@ void publishRet(const std::vector<Prediction>& predictions)
     ss << "[" << p.second << " - " << p.first << "]" << std::endl;
   }
   msg.data = ss.str();
-  g_pub_.publish(msg);
+  g_all_pub_.publish(msg);
 }
 
 void publishMultiHypothesis(std::vector<Prediction> predictions)
 {
   std::sort(predictions.begin(), predictions.end(), sortByScore);
   std_msgs::String msg;
-  msg.data = "CONSENSUS" + predictions[0].first;
+
+  msg.data = "Consensus: " + predictions[0].first + ", w/ P: " + std::to_string(predictions[0].second / g_n_multi_hypothesis_);
+  g_verbose_pub_.publish(msg);
+
+  msg.data = predictions[0].first;
   g_pub_.publish(msg);
 }
 
@@ -137,7 +143,9 @@ int main(int argc, char **argv)
   image_transport::ImageTransport it(nh);
 
   image_transport::Subscriber sub = it.subscribe(g_image_topic_, 1, imageCallback);
-  g_pub_ = nh.advertise<std_msgs::String>(g_image_topic_, 100);
+  g_verbose_pub_ = nh.advertise<std_msgs::String>(g_pub_topic_ + "/verbose", 100);
+  g_pub_ = nh.advertise<std_msgs::String>(g_pub_topic_, 100);
+  g_all_pub_ = nh.advertise<std_msgs::String>(g_pub_topic_+"/all", 100);
 
   g_classifier_.reset(new CaffeROS(g_model_path_, g_weights_path_, g_mean_file_, g_label_file_));
 

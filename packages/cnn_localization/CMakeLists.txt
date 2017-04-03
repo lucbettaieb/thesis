@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   cv_bridge
+  std_srvs
   image_transport
 )
 
@@ -112,5 +113,13 @@ add_dependencies(caffe_deployment ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_E
 
 target_link_libraries(caffe_deployment
   caffe_ros
+  ${catkin_LIBRARIES}
+)
+
+add_executable(four_class_service_caller src/four_class_service_caller.cpp)
+
+add_dependencies(four_class_service_caller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(four_class_service_caller
   ${catkin_LIBRARIES}
 )

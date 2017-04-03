@@ -1,7 +1,7 @@
-model_path: /home/luc/Desktop/deploy.prototxt
-weights_path: /home/luc/Desktop/model.caffemodel
-mean_path: /home/luc/Desktop/mean.binaryproto
-label_path: /home/luc/Desktop/labels.txt
+model_path: /home/luc/Desktop/4class_googlenet/deploy.prototxt
+weights_path: /home/luc/Desktop/4class_googlenet/model.caffemodel
+mean_path: /home/luc/Desktop/4class_googlenet/mean.binaryproto
+label_path: /home/luc/Desktop/4class_googlenet/labels.txt
 
 image_topic: /camera/rgb/image_raw/downsized
 pub_topic: /caffe_ret
