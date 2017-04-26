@@ -26,31 +26,31 @@ data = open(mean_proto_file, 'rb' ).read()
 blob.ParseFromString(data)
 arr = np.array( caffe.io.blobproto_to_array(blob) )
 mean_file = arr[0]
-
+mean = mean_file.mean(1).mean(1)
 
 pycaffe_dir = os.path.dirname(__file__)
 
-image_dims = [300, 300]
+image_dims = [256, 256]
 
 #mean = np.load(mean_file);
 
-#mean = np.load(args.mean_file)
-mean = mean_file.mean(1).mean(1)
+#mean = np.load(args.mean_acfile)
+
 
 channel_swap = [2,1,0] #do i need this
 
 caffe.set_mode_cpu()
 
 classifier = caffe.Classifier(model_file, weights_file,
-        image_dims=image_dims, mean=mean,
-        input_scale=float, raw_scale=255.0,
-        channel_swap=channel_swap)
+    image_dims=image_dims, mean=mean,
+    input_scale=None, raw_scale=255.0,
+    channel_swap=channel_swap)
 
 directories = os.listdir(testimages_directory)
 
 regex = re.compile('([-\w]+\.(?:jpg))')
 
-for N in range(1, 10):
+for N in range(1, 3):
   for label in directories:
     cwd = testimages_directory + "/" + label
     files = os.listdir(cwd)
@@ -62,8 +62,10 @@ for N in range(1, 10):
     selected_images = []
 
     for i in range(0, N):
-      selected_images.append(caffe.io.load_image(cwd+"/"+random.choice(images)))
-
-    predictions = classifier.predict(selected_images, not 1)
+      image = cwd+"/"+random.choice(images)
+      print image
+      selected_images.append(caffe.io.load_image(image))
+    predictions = classifier.predict(selected_images, True)
+    print predictions
 
     
