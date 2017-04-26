@@ -4,30 +4,39 @@ classifies training data with N run majority classification
 
 Luc Bettaieb
 """
-import numpy as numpy
+import numpy as np
 import os
 import sys
 import glob
 import time
 import random
+import re
 
 import caffe
 
 
 #def main():
-mean_file = '~/Desktop/model/mean_file.npy'
-model_file = '~/Desktop/model/deploy.prototxt'
-weights_file = '~/Desktop/model/model.caffemodel'
-testimages_directory = '~/Dekstop/model/test_images'
+mean_proto_file = '/home/luc/Desktop/model/mean.binaryproto'
+model_file = '/home/luc/Desktop/model/deploy.prototxt'
+weights_file = '/home/luc/Desktop/model/model.caffemodel'
+testimages_directory = '/home/luc/Desktop/model/4class_test'
+
+blob = caffe.proto.caffe_pb2.BlobProto()
+data = open(mean_proto_file, 'rb' ).read()
+blob.ParseFromString(data)
+arr = np.array( caffe.io.blobproto_to_array(blob) )
+mean_file = arr[0]
 
 
 pycaffe_dir = os.path.dirname(__file__)
 
-image_dims = [256, 256]
+image_dims = [300, 300]
 
-mean = np.load(mean_file);
+#mean = np.load(mean_file);
 
-mean = np.load(args.mean_file)
+#mean = np.load(args.mean_file)
+mean = mean_file.mean(1).mean(1)
+
 channel_swap = [2,1,0] #do i need this
 
 caffe.set_mode_cpu()
@@ -41,9 +50,9 @@ directories = os.listdir(testimages_directory)
 
 regex = re.compile('([-\w]+\.(?:jpg))')
 
-for N in range (0, 10)
-  for class in directories:
-    cwd = testimages_directory + "/" + class
+for N in range(1, 10):
+  for label in directories:
+    cwd = testimages_directory + "/" + label
     files = os.listdir(cwd)
     images = filter(regex.match, files)
 
@@ -51,8 +60,10 @@ for N in range (0, 10)
 
     # choose N random images and load them into selected_images via caffe
     selected_images = []
-    for i in range (0, N)
-      selected_images.append(caffe.io.load_image(random.choice(images)))
 
-    predictions = classifier.predict(selected_images, not args.center_only)
+    for i in range(0, N):
+      selected_images.append(caffe.io.load_image(cwd+"/"+random.choice(images)))
+
+    predictions = classifier.predict(selected_images, not 1)
+
     
