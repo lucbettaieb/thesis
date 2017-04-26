@@ -5,6 +5,8 @@ classifies training data with N run majority classification
 Luc Bettaieb
 """
 from __future__ import division
+import matplotlib
+matplotlib.use('Agg')
 
 import numpy as np
 import os
@@ -137,5 +139,5 @@ for label in directories:
   plt.ylabel('Accuracy')
   plt.title('Accuracy for N majority weight classifications for ' + label)
 
-  plt.savefig('/home/luc/Desktop/model/' + label + "_testrange_" + N_range + ".png")
+  plt.savefig('/home/luc/Desktop/model/' + label + "_testrange_" + str(N_range) + ".png")
   plt.clf()
