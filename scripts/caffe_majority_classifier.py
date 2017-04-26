@@ -4,6 +4,8 @@ classifies training data with N run majority classification
 
 Luc Bettaieb
 """
+from __future__ import division
+
 import numpy as np
 import os
 import sys
@@ -11,6 +13,9 @@ import glob
 import time
 import random
 import re
+from operator import itemgetter
+import matplotlib.pyplot as plt
+
 
 import caffe
 
@@ -36,6 +41,8 @@ image_dims = [256, 256]
 
 #mean = np.load(args.mean_acfile)
 
+labels_4class = ['lab', 'machineshop', 'office', 'serverroom']
+labels_7class = ['circuitslab', 'entryway', 'lab', 'lounge', 'machineshop', 'office', 'serverroom']
 
 channel_swap = [2,1,0] #do i need this
 
@@ -50,22 +57,85 @@ directories = os.listdir(testimages_directory)
 
 regex = re.compile('([-\w]+\.(?:jpg))')
 
-for N in range(1, 3):
-  for label in directories:
-    cwd = testimages_directory + "/" + label
-    files = os.listdir(cwd)
-    images = filter(regex.match, files)
+# for each subdirectory with the appropriate lael
+for label in directories:
 
-    # at this point images is the list of images of class "class"
+  #initialize accuracies for reporting
+  accuracies = []
 
-    # choose N random images and load them into selected_images via caffe
-    selected_images = []
+  #initialize N for reporting
+  N_list = []
 
-    for i in range(0, N):
-      image = cwd+"/"+random.choice(images)
-      print image
-      selected_images.append(caffe.io.load_image(image))
-    predictions = classifier.predict(selected_images, True)
-    print predictions
+  #define N, where N is the number of weighted majority classifications
+  N_range = 10
 
+  for N in range(1, N_range):
+    n_tests = 20
+    n_correct = 0
+
+    print "N: "+ str(N) + ", current label: " + label
+    for duration in range(0, n_tests): # 100 iterations for label and N value
+
+      cwd = testimages_directory + "/" + label
+      files = os.listdir(cwd)
+      images = filter(regex.match, files)
+
+      # at this point images is the list of images of class "class"
+
+      # choose N random images and load them into selected_images via caffe
+      selected_images = []
+
+      for i in range(0, N):
+        image = cwd + "/" + random.choice(images)
+        selected_images.append(caffe.io.load_image(image))
+
+      labels = []
+      caffe_ret = []
+
+      if len(directories) == 4:
+        labels = np.array(labels_4class)
+        caffe_ret = [0.0, 0.0, 0.0, 0.0]
+      else:
+        labels = np.array(labels_7class)
+        caffe_ret = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+      # generate all of the classification
+      classifications = classifier.predict(selected_images, True).tolist()
+
+      # weighted majority classification
+      # add up all of the 
+      for j in range (0, N):
+        caffe_ret = np.add(classifications[j], caffe_ret)
+      caffe_ret = np.divide(caffe_ret, N)
+
+      max_index = caffe_ret.tolist().index(max(caffe_ret))
+      # print "CURRENT LABEL: " + str(label) + " N: " + str(N)
+
+      predictions = zip(labels, caffe_ret)
+
+      if predictions[max_index][0] == label:
+        n_correct = n_correct + 1
+        print "correct!"
+      else:
+        print "incorrect"
+      
     
+    #endfor 
+
+    accuracies.append(n_correct / n_tests)
+    N_list.append(N)
+    print str(n_correct) + "/" + str(n_tests)
+
+  #endfor
+
+  xs = np.arange(len(N_list)) 
+  plt.bar(xs, accuracies, align='center')
+
+  plt.xticks(xs, N_list) #Replace default x-ticks with xs, then replace xs with labels
+  #plt.yticks(accuracies)
+  plt.xlabel('N classifications')
+  plt.ylabel('Accuracy')
+  plt.title('Accuracy for N majority weight classifications for ' + label)
+
+  plt.savefig('/home/luc/Desktop/model/' + label + "_testrange_" + N_range + ".png")
+  plt.clf()
