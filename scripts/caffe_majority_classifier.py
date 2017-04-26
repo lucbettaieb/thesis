@@ -70,7 +70,7 @@ for label in directories:
   N_range = 10
 
   for N in range(1, N_range):
-    n_tests = 20
+    n_tests = 100
     n_correct = 0
 
     print "N: "+ str(N) + ", current label: " + label
